@@ -106,10 +106,7 @@ router.post('/production-orders',
   validate({ body: createProductionOrderSchema }),
   async (req, res) => {
     try {
-      const productionOrder = await manufacturingService.createProductionOrder({
-        ...req.body,
-        effectiveDate: new Date(req.body.effectiveDate),
-      });
+      const productionOrder = await manufacturingService.createProductionOrder(req.body);
 
       res.status(201).json({
         success: true,
@@ -123,6 +120,99 @@ router.post('/production-orders',
         error: {
           code: 'PRODUCTION_ORDER_CREATION_FAILED',
           message: error instanceof Error ? error.message : 'Failed to create production order',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/manufacturing/production-orders
+ * Get all production orders with filtering and pagination
+ */
+router.get('/production-orders',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { branchId, status, startDate, endDate, page = 1, limit = 50 } = req.query;
+      
+      const whereClause: any = {};
+      
+      if (branchId) {
+        whereClause.branchId = branchId as string;
+      }
+      
+      if (status) {
+        whereClause.status = status as string;
+      }
+      
+      if (startDate && endDate) {
+        whereClause.scheduledStartDate = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string),
+        };
+      }
+
+      const skip = (Number(page) - 1) * Number(limit);
+      
+      const [productionOrders, total] = await Promise.all([
+        prisma.productionOrder.findMany({
+          where: whereClause,
+          include: {
+            operations: {
+              include: {
+                operation: {
+                  include: {
+                    workCenter: true,
+                  },
+                },
+              },
+              orderBy: {
+                sequence: 'asc',
+              },
+            },
+            bom: {
+              select: {
+                id: true,
+                revision: true,
+              },
+            },
+            salesOrder: {
+              include: {
+                customer: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            scheduledStartDate: 'desc',
+          },
+          skip,
+          take: Number(limit),
+        }),
+        prisma.productionOrder.count({ where: whereClause }),
+      ]);
+
+      res.json({
+        success: true,
+        data: productionOrders,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          totalPages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting production orders:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PRODUCTION_ORDERS_FETCH_FAILED',
+          message: 'Failed to fetch production orders',
         },
       });
     }
@@ -311,6 +401,95 @@ router.put('/bom/engineering-change',
         error: {
           code: 'BOM_UPDATE_FAILED',
           message: error instanceof Error ? error.message : 'Failed to update BOM',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/manufacturing/branches
+ * Get all active branches
+ */
+router.get('/branches',
+  authenticate,
+  async (req, res) => {
+    try {
+      const branches = await prisma.branch.findMany({
+        where: {
+          isActive: true,
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          city: true,
+          state: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      res.json({
+        success: true,
+        data: branches,
+      });
+    } catch (error) {
+      logger.error('Error getting branches:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'BRANCHES_FETCH_FAILED',
+          message: 'Failed to fetch branches',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/manufacturing/boms
+ * Get all BOMs with basic information
+ */
+router.get('/boms',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { status = 'APPROVED' } = req.query;
+      
+      const boms = await prisma.bOM.findMany({
+        where: {
+          status: status as string,
+        },
+        select: {
+          id: true,
+          revision: true,
+          status: true,
+          effectiveDate: true,
+          product: {
+            select: {
+              name: true,
+              code: true,
+            },
+          },
+        },
+        orderBy: {
+          effectiveDate: 'desc',
+        },
+      });
+
+      res.json({
+        success: true,
+        data: boms,
+      });
+    } catch (error) {
+      logger.error('Error getting BOMs:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'BOMS_FETCH_FAILED',
+          message: 'Failed to fetch BOMs',
         },
       });
     }
