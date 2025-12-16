@@ -51,9 +51,46 @@ const linkDeliverySchema = z.object({
 // QC Inspection Management Routes
 
 /**
- * POST /api/qc/inspections
- * Create QC inspection with stage-specific checklist
- * Validates: Requirements 5.1 - Stage-specific QC checklist presentation
+ * @swagger
+ * /qc/inspections:
+ *   post:
+ *     summary: Create QC inspection
+ *     description: Create QC inspection with stage-specific checklist
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productionOrderId, stage, checklistItems]
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               stage:
+ *                 type: string
+ *                 enum: [CUTTING, FABRICATION, COATING, ASSEMBLY, DISPATCH, INSTALLATION]
+ *               inspectorId:
+ *                 type: string
+ *                 format: uuid
+ *               customerRequirements:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               checklistItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       201:
+ *         description: QC inspection created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/inspections',
   authenticate,
@@ -81,8 +118,25 @@ router.post('/inspections',
 );
 
 /**
- * GET /api/qc/inspections/:id
- * Get QC inspection with complete details
+ * @swagger
+ * /qc/inspections/{id}:
+ *   get:
+ *     summary: Get QC inspection details
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: QC inspection details
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/inspections/:id',
   authenticate,
@@ -120,9 +174,45 @@ router.get('/inspections/:id',
 );
 
 /**
- * PUT /api/qc/inspections/:id/record
- * Record QC inspection with photos and scoring
- * Validates: Requirements 5.2 - QC inspection data completeness
+ * @swagger
+ * /qc/inspections/{id}/record:
+ *   put:
+ *     summary: Record QC inspection results
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - checklistResults
+ *               - photos
+ *             properties:
+ *               checklistResults:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               photos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: QC inspection recorded successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/inspections/:id/record',
   authenticate,
@@ -169,9 +259,37 @@ router.put('/inspections/:id/record',
 );
 
 /**
- * PUT /api/qc/inspections/:id/assign-inspector
- * Assign QC inspector to inspection
- * Validates: Requirements 5.1 - QC inspector assignment and scheduling
+ * @swagger
+ * /qc/inspections/{id}/assign-inspector:
+ *   put:
+ *     summary: Assign QC inspector
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - inspectorId
+ *             properties:
+ *               inspectorId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Inspector assigned successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/inspections/:id/assign-inspector',
   authenticate,
@@ -212,9 +330,25 @@ router.put('/inspections/:id/assign-inspector',
 );
 
 /**
- * GET /api/qc/checklists/:stage
- * Get stage-specific QC checklist template
- * Validates: Requirements 5.1 - Stage-specific QC checklist presentation
+ * @swagger
+ * /qc/checklists/{stage}:
+ *   get:
+ *     summary: Get stage-specific QC checklist
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: stage
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [CUTTING, FABRICATION, COATING, ASSEMBLY, DISPATCH, INSTALLATION]
+ *     responses:
+ *       200:
+ *         description: QC checklist template
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/checklists/:stage',
   authenticate,
@@ -258,9 +392,30 @@ router.get('/checklists/:stage',
 );
 
 /**
- * POST /api/qc/rework
- * Generate rework job card for failed QC inspection
- * Validates: Requirements 5.3 - QC failure rework generation
+ * @swagger
+ * /qc/rework:
+ *   post:
+ *     summary: Generate rework job card
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - inspectionId
+ *             properties:
+ *               inspectionId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Rework job card generated
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/rework',
   authenticate,
@@ -300,9 +455,48 @@ router.post('/rework',
 );
 
 /**
- * GET /api/qc/analytics
- * Get QC analytics and quality trend reporting
- * Validates: Requirements 5.1 - QC analytics and quality trend reporting
+ * @swagger
+ * /qc/analytics:
+ *   get:
+ *     summary: Get QC analytics
+ *     description: Get QC analytics and quality trend reporting
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: stage
+ *         schema:
+ *           type: string
+ *           enum: [CUTTING, FABRICATION, COATING, ASSEMBLY, DISPATCH, INSTALLATION]
+ *         description: Filter by stage
+ *     responses:
+ *       200:
+ *         description: QC analytics data
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/analytics',
   authenticate,
@@ -346,9 +540,25 @@ router.get('/analytics',
 );
 
 /**
- * GET /api/qc/reports/:id
- * Generate QC report for inspection
- * Validates: Requirements 5.5 - QC report generation
+ * @swagger
+ * /qc/reports/{id}:
+ *   get:
+ *     summary: Generate QC report
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: QC report generated
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/reports/:id',
   authenticate,
@@ -387,9 +597,35 @@ router.get('/reports/:id',
 );
 
 /**
- * POST /api/qc/link-delivery
- * Link QC reports to delivery documentation
- * Validates: Requirements 5.5 - QC report delivery linking
+ * @swagger
+ * /qc/link-delivery:
+ *   post:
+ *     summary: Link QC reports to delivery
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - productionOrderId
+ *               - deliveryDocumentIds
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               deliveryDocumentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: QC reports linked to delivery
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/link-delivery',
   authenticate,
@@ -429,8 +665,47 @@ router.post('/link-delivery',
 );
 
 /**
- * GET /api/qc/inspections
- * Get QC inspections with filtering and pagination
+ * @swagger
+ * /qc/inspections:
+ *   get:
+ *     summary: Get QC inspections list
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: productionOrderId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: stage
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: inspectorId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: QC inspections list
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/inspections',
   authenticate,
@@ -530,8 +805,25 @@ router.get('/inspections',
 );
 
 /**
- * GET /api/qc/inspector-workload/:inspectorId
- * Get inspector current workload and performance
+ * @swagger
+ * /qc/inspector-workload/{inspectorId}:
+ *   get:
+ *     summary: Get inspector workload
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: inspectorId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Inspector workload data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/inspector-workload/:inspectorId',
   authenticate,
@@ -631,8 +923,25 @@ router.get('/inspector-workload/:inspectorId',
 );
 
 /**
- * GET /api/qc/production-order/:id/inspections
- * Get all QC inspections for a production order
+ * @swagger
+ * /qc/production-order/{id}/inspections:
+ *   get:
+ *     summary: Get production order QC inspections
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Production order QC inspections
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/production-order/:id/inspections',
   authenticate,
@@ -748,9 +1057,39 @@ router.put('/inspections/:id/customer-requirements',
 );
 
 /**
- * POST /api/qc/certificates
- * Generate QC certificate for production order
- * Validates: Requirements 5.5 - QC certificate generation
+ * @swagger
+ * /qc/certificates:
+ *   post:
+ *     summary: Generate QC certificate
+ *     description: Generate QC certificate for production order
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productionOrderId, certificateType, issuedBy]
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               certificateType:
+ *                 type: string
+ *               issuedBy:
+ *                 type: string
+ *               customerApprovalRequired:
+ *                 type: boolean
+ *                 default: false
+ *     responses:
+ *       201:
+ *         description: QC certificate generated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/certificates',
   authenticate,
@@ -884,9 +1223,26 @@ router.post('/certificates/:id/customer-approval',
 );
 
 /**
- * GET /api/qc/dashboard
- * Get QC dashboard data with real-time monitoring
- * Validates: Requirements 5.1 - QC dashboard and real-time monitoring
+ * @swagger
+ * /qc/dashboard:
+ *   get:
+ *     summary: Get QC dashboard
+ *     description: Get QC dashboard data with real-time monitoring
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: QC dashboard data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboard',
   authenticate,

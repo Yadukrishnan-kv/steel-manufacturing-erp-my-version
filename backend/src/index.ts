@@ -4,7 +4,9 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { config } from './config/environment';
+import { swaggerSpec } from './config/swagger';
 import { logger } from './utils/logger';
 import { prisma } from './database/connection';
 import { apiRoutes } from './routes';
@@ -27,16 +29,9 @@ if (config.nodeEnv === 'development') {
   app.use(requestLogger);
 }
 
-// Security middleware
+// Security middleware - disable CSP for Swagger UI
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
+  contentSecurityPolicy: false, // Disabled to allow Swagger UI to work
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
@@ -89,6 +84,24 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Steel ERP API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    showExtensions: true,
+  },
+}));
+
+// Swagger JSON endpoint
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 // Mount API routes
 app.use(apiRoutes);
 
@@ -106,6 +119,7 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info(`Steel ERP Backend server running on port ${PORT}`);
     logger.info(`Environment: ${config.nodeEnv}`);
     logger.info(`API Version: ${config.apiVersion}`);
+    logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
     
     // Test database connection on startup
     try {

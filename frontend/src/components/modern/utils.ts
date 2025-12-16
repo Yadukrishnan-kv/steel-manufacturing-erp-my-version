@@ -51,38 +51,49 @@ export const getSizeStyles = (theme: Theme, size: ComponentSize): CSSProperties 
 };
 
 // Get button variant styles
-export const getButtonVariantStyles = (theme: Theme, variant: ButtonVariant): CSSProperties => {
+export const getButtonVariantStyles = (theme: Theme, variant: ButtonVariant): any => {
   const variantMap = {
     primary: {
-      backgroundColor: getColor(theme, 'primary', 600),
+      background: `linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)`,
       color: theme.custom.colors.neutral.white,
       border: 'none',
+      boxShadow: `0 4px 14px 0 rgba(30, 58, 95, 0.3)`,
       '&:hover': {
-        backgroundColor: getColor(theme, 'primary', 700),
-        boxShadow: theme.custom.shadows.md,
+        background: `linear-gradient(135deg, #163047 0%, #245073 100%)`,
+        boxShadow: `0 6px 20px 0 rgba(30, 58, 95, 0.4)`,
+        transform: 'translateY(-1px)',
       },
       '&:focus': {
-        outline: `2px solid ${getColor(theme, 'primary', 400)}`,
+        outline: `2px solid #2d5a87`,
         outlineOffset: '2px',
+        boxShadow: `0 4px 14px 0 rgba(30, 58, 95, 0.3), 0 0 0 3px rgba(45, 90, 135, 0.2)`,
       },
       '&:active': {
-        backgroundColor: getColor(theme, 'primary', 800),
+        background: `linear-gradient(135deg, #12263a 0%, #1e3a5f 100%)`,
+        transform: 'translateY(0px)',
+        boxShadow: `0 2px 8px 0 rgba(30, 58, 95, 0.3)`,
       },
     },
     secondary: {
       backgroundColor: 'transparent',
       color: getColor(theme, 'primary', 600),
-      border: `1px solid ${getColor(theme, 'primary', 300)}`,
+      border: `2px solid ${getColor(theme, 'primary', 300)}`,
+      position: 'relative',
+      overflow: 'hidden',
       '&:hover': {
         backgroundColor: getColor(theme, 'primary', 50),
-        borderColor: getColor(theme, 'primary', 400),
+        borderColor: getColor(theme, 'primary', 500),
+        color: getColor(theme, 'primary', 700),
+        boxShadow: `0 4px 12px 0 rgba(99, 102, 241, 0.15)`,
       },
       '&:focus': {
         outline: `2px solid ${getColor(theme, 'primary', 400)}`,
         outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(99, 102, 241, 0.1)`,
       },
       '&:active': {
         backgroundColor: getColor(theme, 'primary', 100),
+        borderColor: getColor(theme, 'primary', 600),
       },
     },
     tertiary: {
@@ -134,7 +145,7 @@ export const getButtonVariantStyles = (theme: Theme, variant: ButtonVariant): CS
     },
   };
   
-  return variantMap[variant] as CSSProperties;
+  return variantMap[variant];
 };
 
 // Get card elevation styles
@@ -187,7 +198,7 @@ export const getDisabledStyles = (theme: Theme): CSSProperties => {
 
 // Merge styles with proper precedence
 export const mergeStyles = (...styles: (CSSProperties | undefined)[]): CSSProperties => {
-  return styles.reduce((acc, style) => {
+  return styles.reduce<CSSProperties>((acc, style) => {
     if (style) {
       return { ...acc, ...style };
     }

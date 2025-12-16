@@ -69,9 +69,41 @@ const customReportSchema = z.object({
 });
 
 /**
- * GET /api/bi/dashboards/:role
- * Get role-based dashboard system for production, sales, finance, HR, and service
- * Validates: Requirements 10.1 - Role-based dashboard system
+ * @swagger
+ * /bi/dashboards/{role}:
+ *   get:
+ *     summary: Get role-based dashboard
+ *     description: Get role-based dashboard system for production, sales, finance, HR, and service
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: role
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [executive, production, sales, finance, hr, service]
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboards/:role',
   authenticate,
@@ -117,9 +149,41 @@ router.get('/dashboards/:role',
 );
 
 /**
- * POST /api/bi/dashboards
- * Get dashboard with custom parameters
- * Validates: Requirements 10.1 - Role-based dashboard system
+ * @swagger
+ * /bi/dashboards:
+ *   post:
+ *     summary: Get dashboard with custom parameters
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - role
+ *             properties:
+ *               role:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/dashboards',
   authenticate,
@@ -152,9 +216,49 @@ router.post('/dashboards',
 );
 
 /**
- * POST /api/bi/trends
- * Implement trend analysis and forecasting capabilities
- * Validates: Requirements 10.2 - Trend analysis and forecasting capabilities
+ * @swagger
+ * /bi/trends:
+ *   post:
+ *     summary: Get trend analysis and forecasting
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - metric
+ *               - period
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               metric:
+ *                 type: string
+ *                 enum: [sales_revenue, production_volume, customer_satisfaction, inventory_turnover, quality_score]
+ *               period:
+ *                 type: string
+ *                 enum: [daily, weekly, monthly, quarterly, yearly]
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *               groupBy:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Trend analysis retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/trends',
   authenticate,
@@ -187,9 +291,40 @@ router.post('/trends',
 );
 
 /**
- * POST /api/bi/drill-down
- * Build Power BI-style drill-down reporting functionality
- * Validates: Requirements 10.3 - Power BI-style drill-down reporting functionality
+ * @swagger
+ * /bi/drill-down:
+ *   post:
+ *     summary: Get drill-down data for charts
+ *     description: Power BI-style drill-down reporting functionality
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - chartId
+ *               - dataPoint
+ *               - level
+ *             properties:
+ *               chartId:
+ *                 type: string
+ *               dataPoint:
+ *                 type: string
+ *               filters:
+ *                 type: object
+ *               level:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 5
+ *     responses:
+ *       200:
+ *         description: Drill-down data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/drill-down',
   authenticate,
@@ -216,9 +351,37 @@ router.post('/drill-down',
 );
 
 /**
- * POST /api/bi/realtime
- * Create real-time data aggregation and dashboard updates
- * Validates: Requirements 10.4 - Real-time data aggregation and dashboard updates
+ * @swagger
+ * /bi/realtime:
+ *   post:
+ *     summary: Get real-time data aggregation
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dashboardId
+ *               - widgets
+ *             properties:
+ *               dashboardId:
+ *                 type: string
+ *               widgets:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               lastUpdate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Real-time data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/realtime',
   authenticate,
@@ -250,9 +413,34 @@ router.post('/realtime',
 );
 
 /**
- * GET /api/bi/realtime/:dashboardId
- * Get real-time updates for specific dashboard
- * Validates: Requirements 10.4 - Real-time data aggregation and dashboard updates
+ * @swagger
+ * /bi/realtime/{dashboardId}:
+ *   get:
+ *     summary: Get real-time updates for specific dashboard
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: dashboardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: widgets
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of widget IDs
+ *       - in: query
+ *         name: lastUpdate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Real-time updates retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/realtime/:dashboardId',
   authenticate,
@@ -298,9 +486,60 @@ router.get('/realtime/:dashboardId',
 );
 
 /**
- * POST /api/bi/reports/custom
- * Create custom report builder functionality
- * Validates: Requirements 10.5 - Custom report builder functionality
+ * @swagger
+ * /bi/reports/custom:
+ *   post:
+ *     summary: Create custom report
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - dataSource
+ *               - fields
+ *               - filters
+ *               - format
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               dataSource:
+ *                 type: string
+ *                 enum: [sales_orders, production_orders, inventory_items, customers, employees, service_requests]
+ *               fields:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               filters:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               groupBy:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               sortBy:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               format:
+ *                 type: string
+ *                 enum: [table, chart, pivot]
+ *               chartType:
+ *                 type: string
+ *                 enum: [line, bar, pie, area]
+ *     responses:
+ *       201:
+ *         description: Custom report created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/reports/custom',
   authenticate,
@@ -328,9 +567,34 @@ router.post('/reports/custom',
 );
 
 /**
- * GET /api/bi/executive-dashboard
- * Build executive dashboards with KPI monitoring
- * Validates: Requirements 10.1 - Executive dashboards with KPI monitoring
+ * @swagger
+ * /bi/executive-dashboard:
+ *   get:
+ *     summary: Get executive dashboard with KPI monitoring
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Executive dashboard retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/executive-dashboard',
   authenticate,
@@ -364,9 +628,33 @@ router.get('/executive-dashboard',
 );
 
 /**
- * GET /api/bi/kpis
- * Get KPI data for monitoring
- * Validates: Requirements 10.1 - KPI monitoring
+ * @swagger
+ * /bi/kpis:
+ *   get:
+ *     summary: Get KPI data for monitoring
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: KPI data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/kpis',
   authenticate,
@@ -423,9 +711,34 @@ router.get('/kpis',
 );
 
 /**
- * GET /api/bi/charts/:chartId
- * Get specific chart data with drill-down capability
- * Validates: Requirements 10.3 - Power BI-style drill-down reporting
+ * @swagger
+ * /bi/charts/{chartId}:
+ *   get:
+ *     summary: Get specific chart data with drill-down capability
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: chartId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: level
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: filters
+ *         schema:
+ *           type: string
+ *         description: JSON string of filters
+ *     responses:
+ *       200:
+ *         description: Chart data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/charts/:chartId',
   authenticate,
@@ -480,9 +793,18 @@ router.get('/charts/:chartId',
 );
 
 /**
- * GET /api/bi/access-control
- * Implement dashboard access control and user permissions
- * Validates: Requirements 10.4 - Dashboard access control and user permissions
+ * @swagger
+ * /bi/access-control:
+ *   get:
+ *     summary: Get dashboard access control and user permissions
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Access control data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/access-control',
   authenticate,
@@ -589,9 +911,30 @@ router.get('/access-control',
 );
 
 /**
- * GET /api/bi/export/:dashboardId
- * Export dashboard data in various formats
- * Validates: Requirements 10.5 - Custom report builder functionality
+ * @swagger
+ * /bi/export/{dashboardId}:
+ *   get:
+ *     summary: Export dashboard data in various formats
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: dashboardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, csv, excel, pdf]
+ *           default: json
+ *     responses:
+ *       200:
+ *         description: Export prepared successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/export/:dashboardId',
   authenticate,
@@ -640,9 +983,18 @@ router.get('/export/:dashboardId',
 );
 
 /**
- * GET /api/bi/permissions
- * Get user permissions for BI features
- * Validates: Requirements 10.4 - Dashboard access control and user permissions
+ * @swagger
+ * /bi/permissions:
+ *   get:
+ *     summary: Get user permissions for BI features
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User permissions retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/permissions',
   authenticate,
@@ -675,9 +1027,42 @@ router.get('/permissions',
 );
 
 /**
- * GET /api/bi/analytics/advanced
- * Get advanced analytics and insights
- * Validates: Requirements 10.2 - Trend analysis and forecasting capabilities
+ * @swagger
+ * /bi/analytics/advanced:
+ *   get:
+ *     summary: Get advanced analytics and insights
+ *     tags: [Business Intelligence]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: metrics
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of metrics
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Advanced analytics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/analytics/advanced',
   authenticate,

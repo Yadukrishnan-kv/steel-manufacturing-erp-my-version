@@ -80,8 +80,20 @@ const notificationCreateSchema = z.object({
 // ============================================================================
 
 /**
- * Get employee dashboard
- * GET /api/v1/employee-portal/dashboard
+ * @swagger
+ * /employee-portal/dashboard:
+ *   get:
+ *     summary: Get employee dashboard
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/dashboard',
   authenticate,
@@ -119,8 +131,49 @@ router.get('/dashboard',
 );
 
 /**
- * Get employee profile
- * GET /api/v1/employee-portal/profile
+ * @swagger
+ * /employee-portal/profile:
+ *   get:
+ *     summary: Get employee profile
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *   put:
+ *     summary: Update employee profile
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/profile',
   authenticate,
@@ -204,8 +257,18 @@ router.put('/profile',
 // ============================================================================
 
 /**
- * Get current month attendance
- * GET /api/v1/employee-portal/attendance/current-month
+ * @swagger
+ * /employee-portal/attendance/current-month:
+ *   get:
+ *     summary: Get current month attendance
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Attendance data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/attendance/current-month',
   authenticate,
@@ -242,8 +305,31 @@ router.get('/attendance/current-month',
 );
 
 /**
- * Get attendance history
- * GET /api/v1/employee-portal/attendance/history
+ * @swagger
+ * /employee-portal/attendance/history:
+ *   get:
+ *     summary: Get attendance history
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: fromDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: toDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Attendance history retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/attendance/history',
   authenticate,
@@ -298,8 +384,62 @@ router.get('/attendance/history',
 // ============================================================================
 
 /**
- * Submit leave request
- * POST /api/v1/employee-portal/leave/requests
+ * @swagger
+ * /employee-portal/leave/requests:
+ *   post:
+ *     summary: Submit leave request
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - leaveType
+ *               - fromDate
+ *               - toDate
+ *               - reason
+ *             properties:
+ *               leaveType:
+ *                 type: string
+ *                 enum: [CASUAL, SICK, EARNED, MATERNITY, PATERNITY, COMPENSATORY]
+ *               fromDate:
+ *                 type: string
+ *                 format: date
+ *               toDate:
+ *                 type: string
+ *                 format: date
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Leave request submitted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get leave requests history
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Leave requests retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/leave/requests',
   authenticate,
@@ -386,8 +526,23 @@ router.get('/leave/requests',
 );
 
 /**
- * Get leave balance
- * GET /api/v1/employee-portal/leave/balance
+ * @swagger
+ * /employee-portal/leave/balance:
+ *   get:
+ *     summary: Get leave balance
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Leave balance retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leave/balance',
   authenticate,
@@ -433,8 +588,29 @@ router.get('/leave/balance',
 // ============================================================================
 
 /**
- * Get payroll records
- * GET /api/v1/employee-portal/payroll/records
+ * @swagger
+ * /employee-portal/payroll/records:
+ *   get:
+ *     summary: Get payroll records
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Payroll records retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/payroll/records',
   authenticate,
@@ -478,8 +654,27 @@ router.get('/payroll/records',
 );
 
 /**
- * Get specific payroll record (salary slip)
- * GET /api/v1/employee-portal/payroll/records/:period
+ * @swagger
+ * /employee-portal/payroll/records/{period}:
+ *   get:
+ *     summary: Get specific payroll record (salary slip)
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: period
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Period in YYYY-MM format
+ *     responses:
+ *       200:
+ *         description: Payroll record retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/payroll/records/:period',
   authenticate,
@@ -530,8 +725,24 @@ router.get('/payroll/records/:period',
 // ============================================================================
 
 /**
- * Get KPI metrics
- * GET /api/v1/employee-portal/kpi/metrics
+ * @swagger
+ * /employee-portal/kpi/metrics:
+ *   get:
+ *     summary: Get KPI metrics
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *         description: Period in YYYY-MM format
+ *     responses:
+ *       200:
+ *         description: KPI metrics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/kpi/metrics',
   authenticate,
@@ -711,8 +922,29 @@ router.get('/performance/history',
 // ============================================================================
 
 /**
- * Get employee notifications
- * GET /api/v1/employee-portal/notifications
+ * @swagger
+ * /employee-portal/notifications:
+ *   get:
+ *     summary: Get employee notifications
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Notifications retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/notifications',
   authenticate,
@@ -840,8 +1072,38 @@ router.post('/notifications',
 // ============================================================================
 
 /**
- * Get employee directory
- * GET /api/v1/employee-portal/directory
+ * @swagger
+ * /employee-portal/directory:
+ *   get:
+ *     summary: Get employee directory
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: department
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Employee directory retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/directory',
   authenticate,
@@ -889,8 +1151,18 @@ router.get('/directory',
 );
 
 /**
- * Get organizational chart
- * GET /api/v1/employee-portal/organization/chart
+ * @swagger
+ * /employee-portal/organization/chart:
+ *   get:
+ *     summary: Get organizational chart
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Organizational chart retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/organization/chart',
   authenticate,
@@ -992,8 +1264,18 @@ router.post('/documents/upload',
 );
 
 /**
- * Get employee documents
- * GET /api/v1/employee-portal/documents
+ * @swagger
+ * /employee-portal/documents:
+ *   get:
+ *     summary: Get employee documents
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Documents retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/documents',
   authenticate,

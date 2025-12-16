@@ -71,6 +71,68 @@ const orderAllocationSchema = z.object({
 });
 
 // Multi-warehouse inventory management APIs
+
+/**
+ * @swagger
+ * /inventory/items:
+ *   post:
+ *     summary: Create inventory item
+ *     description: Create a new inventory item with warehouse assignment
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [itemCode, name, category, unit, warehouseId]
+ *             properties:
+ *               itemCode:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *                 enum: [RAW_MATERIAL, SEMI_FINISHED, FINISHED_GOOD, CONSUMABLE]
+ *               unit:
+ *                 type: string
+ *               standardCost:
+ *                 type: number
+ *               reorderLevel:
+ *                 type: number
+ *               safetyStock:
+ *                 type: number
+ *               leadTimeDays:
+ *                 type: number
+ *               isBatchTracked:
+ *                 type: boolean
+ *               warehouseId:
+ *                 type: string
+ *                 format: uuid
+ *               binId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Inventory item created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/items', authenticate, validate({ body: createInventoryItemSchema }), async (req: Request, res: Response) => {
   try {
     const inventoryItem = await inventoryService.createInventoryItem({
@@ -94,6 +156,29 @@ router.post('/items', authenticate, validate({ body: createInventoryItemSchema }
   }
 });
 
+/**
+ * @swagger
+ * /inventory/items/warehouse/{warehouseId}:
+ *   get:
+ *     summary: Get items by warehouse
+ *     description: Get all inventory items in a specific warehouse
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: warehouseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Warehouse ID
+ *     responses:
+ *       200:
+ *         description: List of inventory items
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/items/warehouse/:warehouseId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { warehouseId } = req.params;
@@ -124,6 +209,28 @@ router.get('/items/warehouse/:warehouseId', authenticate, async (req: Request, r
   }
 });
 
+/**
+ * @swagger
+ * /inventory/stock/{itemCode}:
+ *   get:
+ *     summary: Get multi-warehouse stock
+ *     description: Get stock levels across all warehouses for an item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: itemCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Item code
+ *     responses:
+ *       200:
+ *         description: Stock levels across warehouses
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/stock/:itemCode', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { itemCode } = req.params;
@@ -155,6 +262,42 @@ router.get('/stock/:itemCode', authenticate, async (req: Request, res: Response)
 });
 
 // Rack/bin location assignment and tracking APIs
+
+/**
+ * @swagger
+ * /inventory/locations/assign:
+ *   post:
+ *     summary: Assign location
+ *     description: Assign rack/bin location to an inventory item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [inventoryItemId, warehouseId, rackCode, binCode]
+ *             properties:
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               warehouseId:
+ *                 type: string
+ *                 format: uuid
+ *               rackCode:
+ *                 type: string
+ *               binCode:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Location assigned successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/locations/assign', authenticate, validate({ body: locationAssignmentSchema }), async (req: Request, res: Response) => {
   try {
     const updatedItem = await inventoryService.assignLocation(req.body);
@@ -206,6 +349,31 @@ router.get('/locations/warehouse/:warehouseId', authenticate, async (req: Reques
 });
 
 // Barcode/QR code generation and scanning APIs
+
+/**
+ * @swagger
+ * /inventory/barcode/{barcode}:
+ *   get:
+ *     summary: Scan barcode
+ *     description: Get item details by scanning barcode/QR code
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: barcode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Barcode or QR code value
+ *     responses:
+ *       200:
+ *         description: Item details
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/barcode/:barcode', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { barcode } = req.params;
@@ -249,6 +417,50 @@ router.get('/barcode/:barcode', authenticate, async (req: Request, res: Response
 });
 
 // Batch/lot tracking APIs
+
+/**
+ * @swagger
+ * /inventory/batches:
+ *   post:
+ *     summary: Create batch record
+ *     description: Create a new batch/lot record for inventory tracking
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [batchNumber, inventoryItemId, quantity, receivedDate]
+ *             properties:
+ *               batchNumber:
+ *                 type: string
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               quantity:
+ *                 type: number
+ *               manufactureDate:
+ *                 type: string
+ *                 format: date-time
+ *               expiryDate:
+ *                 type: string
+ *                 format: date-time
+ *               supplierLot:
+ *                 type: string
+ *               receivedDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Batch record created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/batches', authenticate, validate({ body: batchRecordSchema }), async (req: Request, res: Response) => {
   try {
     const batchData = {
@@ -306,6 +518,28 @@ router.get('/batches/item/:inventoryItemId', authenticate, async (req: Request, 
   }
 });
 
+/**
+ * @swagger
+ * /inventory/batches/expiring:
+ *   get:
+ *     summary: Get expiring batches
+ *     description: Get batches expiring within specified days
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Days ahead to check for expiry
+ *     responses:
+ *       200:
+ *         description: List of expiring batches
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/batches/expiring', authenticate, async (req: Request, res: Response) => {
   try {
     const daysAhead = req.query.days ? parseInt(req.query.days as string) : 30;
@@ -327,6 +561,63 @@ router.get('/batches/expiring', authenticate, async (req: Request, res: Response
 });
 
 // Stock transaction APIs
+
+/**
+ * @swagger
+ * /inventory/transactions:
+ *   post:
+ *     summary: Record stock transaction
+ *     description: Record a stock transaction (IN, OUT, TRANSFER, ADJUSTMENT)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [transactionType, inventoryItemId, warehouseId, quantity]
+ *             properties:
+ *               transactionType:
+ *                 type: string
+ *                 enum: [IN, OUT, TRANSFER, ADJUSTMENT]
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               warehouseId:
+ *                 type: string
+ *                 format: uuid
+ *               batchId:
+ *                 type: string
+ *                 format: uuid
+ *               quantity:
+ *                 type: number
+ *               unitCost:
+ *                 type: number
+ *               referenceType:
+ *                 type: string
+ *               referenceId:
+ *                 type: string
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Transaction recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/StockTransaction'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/transactions', authenticate, validate({ body: stockTransactionSchema }), async (req: Request, res: Response) => {
   try {
     const transaction = await inventoryService.recordStockTransaction({
@@ -350,6 +641,52 @@ router.post('/transactions', authenticate, validate({ body: stockTransactionSche
   }
 });
 
+/**
+ * @swagger
+ * /inventory/transactions:
+ *   get:
+ *     summary: Get stock transactions
+ *     description: Get stock transactions with filtering
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: inventoryItemId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by inventory item
+ *       - in: query
+ *         name: warehouseId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by warehouse
+ *       - in: query
+ *         name: transactionType
+ *         schema:
+ *           type: string
+ *           enum: [IN, OUT, TRANSFER, ADJUSTMENT]
+ *         description: Filter by transaction type
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: List of transactions
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/transactions', authenticate, async (req: Request, res: Response) => {
   try {
     const filters: any = {};
@@ -388,6 +725,22 @@ router.get('/transactions', authenticate, async (req: Request, res: Response) =>
 });
 
 // Safety stock and reorder point monitoring APIs
+
+/**
+ * @swagger
+ * /inventory/alerts/low-stock:
+ *   get:
+ *     summary: Get low stock alerts
+ *     description: Get items below safety stock level
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of low stock items
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/alerts/low-stock', authenticate, async (req: Request, res: Response) => {
   try {
     const lowStockItems = await inventoryService.getItemsBelowSafetyStock();
@@ -450,6 +803,50 @@ router.post('/allocate-order', authenticate, validate({ body: orderAllocationSch
 });
 
 // Inter-branch stock transfer APIs
+
+/**
+ * @swagger
+ * /inventory/transfers:
+ *   post:
+ *     summary: Create stock transfer
+ *     description: Create inter-branch stock transfer request
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fromBranchId, toBranchId, items]
+ *             properties:
+ *               fromBranchId:
+ *                 type: string
+ *                 format: uuid
+ *               toBranchId:
+ *                 type: string
+ *                 format: uuid
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     requestedQty:
+ *                       type: number
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Stock transfer created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/transfers', authenticate, validate({ body: stockTransferSchema }), async (req: Request, res: Response) => {
   try {
     const transfer = await inventoryService.createStockTransfer({
@@ -507,6 +904,36 @@ router.put('/transfers/:transferId/status', authenticate, async (req: Request, r
 });
 
 // Inventory valuation APIs
+
+/**
+ * @swagger
+ * /inventory/valuation:
+ *   get:
+ *     summary: Get inventory valuation
+ *     description: Calculate inventory valuation using FIFO, LIFO, or weighted average
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: method
+ *         schema:
+ *           type: string
+ *           enum: [FIFO, LIFO, WEIGHTED_AVERAGE]
+ *           default: FIFO
+ *         description: Valuation method
+ *       - in: query
+ *         name: warehouseId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by warehouse
+ *     responses:
+ *       200:
+ *         description: Inventory valuation data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/valuation', authenticate, async (req: Request, res: Response) => {
   try {
     const method = (req.query.method as 'FIFO' | 'LIFO' | 'WEIGHTED_AVERAGE') || 'FIFO';
