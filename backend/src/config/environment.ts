@@ -31,6 +31,30 @@ const envSchema = z.object({
   
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  
+  // External APIs
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  META_ACCESS_TOKEN: z.string().optional(),
+  META_APP_ID: z.string().optional(),
+  META_APP_SECRET: z.string().optional(),
+  META_VERIFY_TOKEN: z.string().optional(),
+  GOOGLE_ADS_CLIENT_ID: z.string().optional(),
+  GOOGLE_ADS_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_ADS_REFRESH_TOKEN: z.string().optional(),
+  GOOGLE_ADS_DEVELOPER_TOKEN: z.string().optional(),
+  
+  // Email
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.string().transform(Number).default('587'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  
+  // SMS
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_PHONE_NUMBER: z.string().optional(),
 });
 
 // Validate environment variables
@@ -67,5 +91,38 @@ export const config = {
   
   cors: {
     origin: env.CORS_ORIGIN,
+  },
+  
+  externalApis: {
+    whatsapp: {
+      accessToken: env.WHATSAPP_ACCESS_TOKEN,
+      phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID,
+      verifyToken: env.WHATSAPP_VERIFY_TOKEN,
+    },
+    meta: {
+      accessToken: env.META_ACCESS_TOKEN,
+      appId: env.META_APP_ID,
+      appSecret: env.META_APP_SECRET,
+      verifyToken: env.META_VERIFY_TOKEN,
+    },
+    google: {
+      clientId: env.GOOGLE_ADS_CLIENT_ID,
+      clientSecret: env.GOOGLE_ADS_CLIENT_SECRET,
+      refreshToken: env.GOOGLE_ADS_REFRESH_TOKEN,
+      developerToken: env.GOOGLE_ADS_DEVELOPER_TOKEN,
+    },
+  },
+  
+  email: {
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    user: env.SMTP_USER,
+    password: env.SMTP_PASSWORD,
+  },
+  
+  sms: {
+    accountSid: env.TWILIO_ACCOUNT_SID,
+    authToken: env.TWILIO_AUTH_TOKEN,
+    phoneNumber: env.TWILIO_PHONE_NUMBER,
   },
 } as const;

@@ -20,24 +20,23 @@ const renderWithProviders = (component: React.ReactElement) => {
 };
 
 describe('App Component', () => {
-  it('renders the main heading', () => {
+  it('renders login form when not authenticated', () => {
     renderWithProviders(<App />);
     
-    const heading = screen.getByText('Steel Manufacturing ERP');
-    expect(heading).toBeInTheDocument();
+    expect(screen.getByText(/Steel ERP/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
   });
 
-  it('renders the welcome message', () => {
+  it('renders sign in button', () => {
     renderWithProviders(<App />);
     
-    const welcomeMessage = screen.getByText('Welcome to the Steel Manufacturing ERP System');
-    expect(welcomeMessage).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('renders the dashboard section', () => {
+  it('renders email and password fields', () => {
     renderWithProviders(<App />);
     
-    const dashboardHeading = screen.getByText('Dashboard');
-    expect(dashboardHeading).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 });

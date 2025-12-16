@@ -1,0 +1,1127 @@
+// Quality Control Routes - API endpoints for QC management
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validation';
+import { QCService } from '../services/qc.service';
+import { logger } from '../utils/logger';
+import { z } from 'zod';
+
+const router = Router();
+const prisma = new PrismaClient();
+const qcService = new QCService(prisma);
+
+// Validation schemas
+const createQCInspectionSchema = z.object({
+  productionOrderId: z.string().uuid(),
+  stage: z.enum(['CUTTING', 'FABRICATION', 'COATING', 'ASSEMBLY', 'DISPATCH', 'INSTALLATION']),
+  inspectorId: z.string().uuid().optional(),
+  customerRequirements: z.array(z.string()).optional(),
+  checklistItems: z.array(z.object({
+    checkpointId: z.string().min(1),
+    description: z.string().min(1),
+    expectedValue: z.string().min(1),
+    actualValue: z.string().optional(),
+    status: z.enum(['PENDING', 'PASS', 'FAIL', 'NA']).optional(),
+    photos: z.array(z.string()).optional(),
+    comments: z.string().optional(),
+  })),
+});
+
+const recordQCInspectionSchema = z.object({
+  checklistResults: z.array(z.object({
+    checkpointId: z.string().min(1),
+    actualValue: z.string().optional(),
+    status: z.enum(['PENDING', 'PASS', 'FAIL', 'NA']).optional(),
+    photos: z.array(z.string()).optional(),
+    comments: z.string().optional(),
+  })),
+  photos: z.array(z.string()),
+  remarks: z.string().optional(),
+});
+
+const assignInspectorSchema = z.object({
+  inspectorId: z.string().uuid(),
+});
+
+const linkDeliverySchema = z.object({
+  deliveryDocumentIds: z.array(z.string()),
+});
+
+// QC Inspection Management Routes
+
+/**
+ * POST /api/qc/inspections
+ * Create QC inspection with stage-specific checklist
+ * Validates: Requirements 5.1 - Stage-specific QC checklist presentation
+ */
+router.post('/inspections',
+  authenticate,
+  validate({ body: createQCInspectionSchema }),
+  async (req, res) => {
+    try {
+      const inspection = await qcService.createQCInspection(req.body);
+
+      res.status(201).json({
+        success: true,
+        data: inspection,
+        message: 'QC inspection created successfully',
+      });
+    } catch (error) {
+      logger.error('Error creating QC inspection:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_INSPECTION_CREATION_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to create QC inspection',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/inspections/:id
+ * Get QC inspection with complete details
+ */
+router.get('/inspections/:id',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      const inspection = await qcService.getQCInspectionWithDetails(id);
+
+      res.json({
+        success: true,
+        data: inspection,
+      });
+    } catch (error) {
+      logger.error('Error getting QC inspection:', error);
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'QC_INSPECTION_NOT_FOUND',
+          message: 'QC inspection not found',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/qc/inspections/:id/record
+ * Record QC inspection with photos and scoring
+ * Validates: Requirements 5.2 - QC inspection data completeness
+ */
+router.put('/inspections/:id/record',
+  authenticate,
+  validate({ body: recordQCInspectionSchema }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      const { checklistResults, photos, remarks } = req.body;
+
+      const inspection = await qcService.recordQCInspection(
+        id,
+        checklistResults,
+        photos,
+        remarks
+      );
+
+      res.json({
+        success: true,
+        data: inspection,
+        message: 'QC inspection recorded successfully',
+      });
+    } catch (error) {
+      logger.error('Error recording QC inspection:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_INSPECTION_RECORDING_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to record QC inspection',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/qc/inspections/:id/assign-inspector
+ * Assign QC inspector to inspection
+ * Validates: Requirements 5.1 - QC inspector assignment and scheduling
+ */
+router.put('/inspections/:id/assign-inspector',
+  authenticate,
+  validate({ body: assignInspectorSchema }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { inspectorId } = req.body;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      await qcService.assignQCInspector(id, inspectorId);
+
+      res.json({
+        success: true,
+        message: 'QC inspector assigned successfully',
+      });
+    } catch (error) {
+      logger.error('Error assigning QC inspector:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_INSPECTOR_ASSIGNMENT_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to assign QC inspector',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/checklists/:stage
+ * Get stage-specific QC checklist template
+ * Validates: Requirements 5.1 - Stage-specific QC checklist presentation
+ */
+router.get('/checklists/:stage',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { stage } = req.params;
+      
+      if (!stage || !['CUTTING', 'FABRICATION', 'COATING', 'ASSEMBLY', 'DISPATCH', 'INSTALLATION'].includes(stage)) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_STAGE',
+            message: 'Invalid QC stage specified',
+          },
+        });
+        return;
+      }
+
+      // This would typically come from a database or configuration
+      // For now, we'll return the stage-specific checklist from the service
+      const checklist = await qcService['getStageSpecificChecklist'](stage as any);
+
+      res.json({
+        success: true,
+        data: {
+          stage,
+          checklist,
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting QC checklist:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_CHECKLIST_FETCH_FAILED',
+          message: 'Failed to fetch QC checklist',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/rework
+ * Generate rework job card for failed QC inspection
+ * Validates: Requirements 5.3 - QC failure rework generation
+ */
+router.post('/rework',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { inspectionId } = req.body;
+
+      if (!inspectionId) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      const reworkJobCard = await qcService.generateReworkJobCard(inspectionId);
+
+      res.status(201).json({
+        success: true,
+        data: reworkJobCard,
+        message: 'Rework job card generated successfully',
+      });
+    } catch (error) {
+      logger.error('Error generating rework job card:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'REWORK_GENERATION_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to generate rework job card',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/analytics
+ * Get QC analytics and quality trend reporting
+ * Validates: Requirements 5.1 - QC analytics and quality trend reporting
+ */
+router.get('/analytics',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { startDate, endDate, branchId, stage } = req.query;
+
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Start date and end date are required',
+          },
+        });
+        return;
+      }
+
+      const analytics = await qcService.getQCAnalytics(
+        new Date(startDate as string),
+        new Date(endDate as string),
+        branchId as string,
+        stage as any
+      );
+
+      res.json({
+        success: true,
+        data: analytics,
+      });
+    } catch (error) {
+      logger.error('Error getting QC analytics:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_ANALYTICS_FAILED',
+          message: 'Failed to get QC analytics',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/reports/:id
+ * Generate QC report for inspection
+ * Validates: Requirements 5.5 - QC report generation
+ */
+router.get('/reports/:id',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      const report = await qcService.generateQCReport(id);
+
+      res.json({
+        success: true,
+        data: report,
+      });
+    } catch (error) {
+      logger.error('Error generating QC report:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_REPORT_GENERATION_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to generate QC report',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/link-delivery
+ * Link QC reports to delivery documentation
+ * Validates: Requirements 5.5 - QC report delivery linking
+ */
+router.post('/link-delivery',
+  authenticate,
+  validate({ body: linkDeliverySchema }),
+  async (req, res) => {
+    try {
+      const { productionOrderId, deliveryDocumentIds } = req.body;
+
+      if (!productionOrderId) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Production order ID is required',
+          },
+        });
+        return;
+      }
+
+      await qcService.linkQCReportToDelivery(productionOrderId, deliveryDocumentIds);
+
+      res.json({
+        success: true,
+        message: 'QC reports linked to delivery successfully',
+      });
+    } catch (error) {
+      logger.error('Error linking QC reports to delivery:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_DELIVERY_LINKING_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to link QC reports to delivery',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/inspections
+ * Get QC inspections with filtering and pagination
+ */
+router.get('/inspections',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { 
+        productionOrderId, 
+        stage, 
+        status, 
+        inspectorId, 
+        startDate, 
+        endDate,
+        page = '1',
+        limit = '10'
+      } = req.query;
+
+      const whereClause: any = {};
+
+      if (productionOrderId) {
+        whereClause.productionOrderId = productionOrderId;
+      }
+
+      if (stage) {
+        whereClause.stage = stage;
+      }
+
+      if (status) {
+        whereClause.status = status;
+      }
+
+      if (inspectorId) {
+        whereClause.inspectorId = inspectorId;
+      }
+
+      if (startDate && endDate) {
+        whereClause.inspectionDate = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string),
+        };
+      }
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
+
+      const [inspections, total] = await Promise.all([
+        prisma.qCInspection.findMany({
+          where: whereClause,
+          include: {
+            checklistItems: true,
+            productionOrder: {
+              include: {
+                salesOrder: {
+                  include: {
+                    customer: {
+                      select: { name: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            inspectionDate: 'desc',
+          },
+          skip,
+          take: limitNum,
+        }),
+        prisma.qCInspection.count({
+          where: whereClause,
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          inspections,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            pages: Math.ceil(total / limitNum),
+          },
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting QC inspections:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_INSPECTIONS_FETCH_FAILED',
+          message: 'Failed to fetch QC inspections',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/inspector-workload/:inspectorId
+ * Get inspector current workload and performance
+ */
+router.get('/inspector-workload/:inspectorId',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { inspectorId } = req.params;
+
+      if (!inspectorId) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspector ID is required',
+          },
+        });
+        return;
+      }
+
+      const [pendingInspections, completedToday, weeklyStats] = await Promise.all([
+        // Pending inspections
+        prisma.qCInspection.findMany({
+          where: {
+            inspectorId,
+            status: 'PENDING',
+          },
+          include: {
+            productionOrder: {
+              select: {
+                orderNumber: true,
+              },
+            },
+          },
+        }),
+        
+        // Completed today
+        prisma.qCInspection.count({
+          where: {
+            inspectorId,
+            inspectionDate: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lte: new Date(new Date().setHours(23, 59, 59, 999)),
+            },
+            status: {
+              in: ['PASSED', 'FAILED', 'REWORK_REQUIRED'],
+            },
+          },
+        }),
+        
+        // Weekly statistics
+        prisma.qCInspection.findMany({
+          where: {
+            inspectorId,
+            inspectionDate: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+            status: {
+              in: ['PASSED', 'FAILED', 'REWORK_REQUIRED'],
+            },
+          },
+        }),
+      ]);
+
+      const weeklyPassRate = weeklyStats.length > 0 ? 
+        (weeklyStats.filter(i => i.status === 'PASSED').length / weeklyStats.length) * 100 : 0;
+
+      const averageScore = weeklyStats.length > 0 ?
+        weeklyStats.reduce((sum, i) => sum + (i.overallScore || 0), 0) / weeklyStats.length : 0;
+
+      res.json({
+        success: true,
+        data: {
+          inspectorId,
+          pendingCount: pendingInspections.length,
+          completedToday,
+          weeklyCompleted: weeklyStats.length,
+          weeklyPassRate,
+          averageScore,
+          pendingInspections: pendingInspections.map(i => ({
+            id: i.id,
+            inspectionNumber: i.inspectionNumber,
+            stage: i.stage,
+            productionOrderNumber: i.productionOrder.orderNumber,
+          })),
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting inspector workload:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INSPECTOR_WORKLOAD_FAILED',
+          message: 'Failed to get inspector workload',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/production-order/:id/inspections
+ * Get all QC inspections for a production order
+ */
+router.get('/production-order/:id/inspections',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Production order ID is required',
+          },
+        });
+        return;
+      }
+
+      const inspections = await prisma.qCInspection.findMany({
+        where: {
+          productionOrderId: id,
+        },
+        include: {
+          checklistItems: true,
+        },
+        orderBy: {
+          inspectionDate: 'asc',
+        },
+      });
+
+      // Calculate overall production order QC status
+      const totalInspections = inspections.length;
+      const passedInspections = inspections.filter(i => i.status === 'PASSED').length;
+      const failedInspections = inspections.filter(i => i.status === 'FAILED').length;
+      const pendingInspections = inspections.filter(i => i.status === 'PENDING').length;
+
+      const overallStatus = pendingInspections > 0 ? 'IN_PROGRESS' :
+        failedInspections > 0 ? 'FAILED' :
+        passedInspections === totalInspections ? 'PASSED' : 'PARTIAL';
+
+      res.json({
+        success: true,
+        data: {
+          productionOrderId: id,
+          inspections,
+          summary: {
+            totalInspections,
+            passedInspections,
+            failedInspections,
+            pendingInspections,
+            overallStatus,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting production order QC inspections:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PRODUCTION_ORDER_QC_FAILED',
+          message: 'Failed to get production order QC inspections',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/qc/inspections/:id/customer-requirements
+ * Update customer-specific requirements for inspection
+ * Validates: Requirements 5.4 - Customer requirement embedding
+ */
+router.put('/inspections/:id/customer-requirements',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { customerRequirements } = req.body;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Inspection ID is required',
+          },
+        });
+        return;
+      }
+
+      await prisma.qCInspection.update({
+        where: { id },
+        data: {
+          customerRequirements: customerRequirements ? JSON.stringify(customerRequirements) : null,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Customer requirements updated successfully',
+      });
+    } catch (error) {
+      logger.error('Error updating customer requirements:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'CUSTOMER_REQUIREMENTS_UPDATE_FAILED',
+          message: 'Failed to update customer requirements',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/certificates
+ * Generate QC certificate for production order
+ * Validates: Requirements 5.5 - QC certificate generation
+ */
+router.post('/certificates',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { 
+        productionOrderId, 
+        certificateType, 
+        issuedBy, 
+        customerApprovalRequired = false 
+      } = req.body;
+
+      if (!productionOrderId || !certificateType || !issuedBy) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Production order ID, certificate type, and issued by are required',
+          },
+        });
+        return;
+      }
+
+      const certificate = await qcService.generateQCCertificate(
+        productionOrderId,
+        certificateType,
+        issuedBy,
+        customerApprovalRequired
+      );
+
+      res.status(201).json({
+        success: true,
+        data: certificate,
+        message: 'QC certificate generated successfully',
+      });
+    } catch (error) {
+      logger.error('Error generating QC certificate:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_CERTIFICATE_GENERATION_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to generate QC certificate',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/certificates/:id/submit-approval
+ * Submit QC certificate for customer approval
+ * Validates: Requirements 5.5 - Customer approval workflows
+ */
+router.post('/certificates/:id/submit-approval',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { submissionNotes } = req.body;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Certificate ID is required',
+          },
+        });
+        return;
+      }
+
+      await qcService.submitCertificateForCustomerApproval(id, submissionNotes);
+
+      res.json({
+        success: true,
+        message: 'Certificate submitted for customer approval successfully',
+      });
+    } catch (error) {
+      logger.error('Error submitting certificate for approval:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'CERTIFICATE_SUBMISSION_FAILED',
+          message: 'Failed to submit certificate for approval',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/certificates/:id/customer-approval
+ * Process customer approval for QC certificate
+ * Validates: Requirements 5.5 - Customer approval workflows
+ */
+router.post('/certificates/:id/customer-approval',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { approved, approvedBy, comments } = req.body;
+
+      if (!id || typeof approved !== 'boolean' || !approvedBy) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Certificate ID, approval status, and approved by are required',
+          },
+        });
+        return;
+      }
+
+      await qcService.processCustomerApproval(id, approved, approvedBy, comments);
+
+      res.json({
+        success: true,
+        message: `Certificate ${approved ? 'approved' : 'rejected'} successfully`,
+      });
+    } catch (error) {
+      logger.error('Error processing customer approval:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'CUSTOMER_APPROVAL_FAILED',
+          message: 'Failed to process customer approval',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/dashboard
+ * Get QC dashboard data with real-time monitoring
+ * Validates: Requirements 5.1 - QC dashboard and real-time monitoring
+ */
+router.get('/dashboard',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { branchId } = req.query;
+
+      const dashboardData = await qcService.getQCDashboardData(branchId as string);
+
+      res.json({
+        success: true,
+        data: dashboardData,
+      });
+    } catch (error) {
+      logger.error('Error getting QC dashboard data:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_DASHBOARD_FAILED',
+          message: 'Failed to get QC dashboard data',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/qc/production-integration
+ * Integrate QC with production process
+ * Validates: Requirements 5.1, 5.3 - QC integration with production
+ */
+router.post('/production-integration',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { productionOrderId, stage, triggerType = 'MANUAL_TRIGGER' } = req.body;
+
+      if (!productionOrderId || !stage) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Production order ID and stage are required',
+          },
+        });
+        return;
+      }
+
+      const inspectionId = await qcService.integrateWithProduction(
+        productionOrderId,
+        stage,
+        triggerType
+      );
+
+      res.status(201).json({
+        success: true,
+        data: { inspectionId },
+        message: 'QC inspection created and integrated with production',
+      });
+    } catch (error) {
+      logger.error('Error integrating QC with production:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'QC_PRODUCTION_INTEGRATION_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to integrate QC with production',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/qc/inspections/:id/update-production
+ * Update production order status based on QC results
+ * Validates: Requirements 5.3 - QC integration with production
+ */
+router.put('/inspections/:id/update-production',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { qcStatus } = req.body;
+
+      if (!id || !qcStatus) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Inspection ID and QC status are required',
+          },
+        });
+        return;
+      }
+
+      await qcService.updateProductionOrderFromQC(id, qcStatus);
+
+      res.json({
+        success: true,
+        message: 'Production order status updated based on QC results',
+      });
+    } catch (error) {
+      logger.error('Error updating production order from QC:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'PRODUCTION_UPDATE_FAILED',
+          message: 'Failed to update production order from QC',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/performance-metrics
+ * Get comprehensive QC performance metrics and inspector evaluation
+ * Validates: Requirements 5.1 - QC performance metrics and inspector evaluation
+ */
+router.get('/performance-metrics',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { 
+        startDate, 
+        endDate, 
+        branchId, 
+        inspectorId,
+        metricType = 'all' 
+      } = req.query;
+
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'Start date and end date are required',
+          },
+        });
+        return;
+      }
+
+      // Get comprehensive analytics
+      const analytics = await qcService.getQCAnalytics(
+        new Date(startDate as string),
+        new Date(endDate as string),
+        branchId as string
+      );
+
+      // Get dashboard data for additional metrics
+      const dashboardData = await qcService.getQCDashboardData(branchId as string);
+
+      const performanceMetrics = {
+        overview: {
+          totalInspections: analytics.totalInspections,
+          passRate: analytics.passRate,
+          failRate: analytics.failRate,
+          reworkRate: analytics.reworkRate,
+          averageScore: analytics.averageScore,
+        },
+        stagePerformance: analytics.stageWiseMetrics,
+        inspectorPerformance: analytics.inspectorPerformance,
+        trends: analytics.trendData,
+        realTimeMetrics: dashboardData.realTimeMetrics,
+        productionIntegration: dashboardData.productionIntegration,
+        alerts: dashboardData.alerts,
+      };
+
+      res.json({
+        success: true,
+        data: performanceMetrics,
+      });
+    } catch (error) {
+      logger.error('Error getting QC performance metrics:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_PERFORMANCE_METRICS_FAILED',
+          message: 'Failed to get QC performance metrics',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/qc/alerts
+ * Get current QC alerts and notifications
+ */
+router.get('/alerts',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { branchId, severity, acknowledged } = req.query;
+
+      const dashboardData = await qcService.getQCDashboardData(branchId as string);
+      
+      let alerts = dashboardData.alerts;
+
+      // Filter by severity if provided
+      if (severity) {
+        alerts = alerts.filter(alert => alert.severity === severity);
+      }
+
+      // Filter by acknowledged status if provided
+      if (acknowledged !== undefined) {
+        const isAcknowledged = acknowledged === 'true';
+        alerts = alerts.filter(alert => alert.acknowledged === isAcknowledged);
+      }
+
+      res.json({
+        success: true,
+        data: {
+          alerts,
+          summary: {
+            total: alerts.length,
+            critical: alerts.filter(a => a.severity === 'CRITICAL').length,
+            high: alerts.filter(a => a.severity === 'HIGH').length,
+            medium: alerts.filter(a => a.severity === 'MEDIUM').length,
+            low: alerts.filter(a => a.severity === 'LOW').length,
+            unacknowledged: alerts.filter(a => !a.acknowledged).length,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting QC alerts:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'QC_ALERTS_FAILED',
+          message: 'Failed to get QC alerts',
+        },
+      });
+    }
+  }
+);
+
+export { router as qcRoutes };
