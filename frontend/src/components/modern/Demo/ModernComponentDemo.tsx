@@ -8,6 +8,7 @@ import styled from 'styled-components';
 import { useTheme } from '@mui/material/styles';
 import { ModernButton } from '../Button';
 import { PlayArrow, Download, Settings, Delete } from '@mui/icons-material';
+import DashboardDemo from '../Dashboard/DashboardDemo';
 
 const DemoContainer = styled.div`
   padding: ${({ theme }) => theme.custom.spacing[8]};
@@ -300,6 +301,14 @@ export const ModernComponentDemo: React.FC = () => {
 </ModernButton>`}
           </CodeBlock>
         </SubSection>
+      </Section>
+
+      <Section theme={theme}>
+        <SectionTitle theme={theme}>Dashboard Components</SectionTitle>
+        <Description theme={theme}>
+          Comprehensive dashboard components including KPI cards, data tables, charts, and responsive grids.
+        </Description>
+        <DashboardDemo />
       </Section>
 
       <Section theme={theme}>

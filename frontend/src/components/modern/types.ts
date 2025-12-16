@@ -115,7 +115,7 @@ export interface ModernLayoutProps extends BaseComponentProps {
   wrap?: boolean;
 }
 
-// Sidebar component types
+// Navigation component types
 export interface ModernSidebarProps extends BaseComponentProps {
   items: NavigationItem[];
   collapsed?: boolean;
@@ -134,6 +134,32 @@ export interface NavigationItem {
   disabled?: boolean;
   children?: NavigationItem[];
   badge?: string | number;
+}
+
+export interface ModernAppBarProps extends BaseComponentProps {
+  title?: string;
+  breadcrumbs?: Array<{ label: string; active?: boolean }>;
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+    avatar?: string;
+  };
+  sidebarWidth?: number;
+  sidebarCollapsed?: boolean;
+  sidebarCollapsedWidth?: number;
+  showSearch?: boolean;
+  showNotifications?: boolean;
+  showThemeToggle?: boolean;
+  notificationCount?: number;
+  onMobileMenuClick?: () => void;
+  onSearchClick?: () => void;
+  onNotificationsClick?: () => void;
+  onThemeToggle?: () => void;
+  onProfileClick?: () => void;
+  onSettingsClick?: () => void;
+  onLogout?: () => void;
 }
 
 // Component style system

@@ -21,6 +21,7 @@ export type {
   ModernTextFieldProps,
   ModernLayoutProps,
   ModernSidebarProps,
+  ModernAppBarProps,
   NavigationItem,
   ComponentStyles,
   ModernThemeExtension,
@@ -49,8 +50,14 @@ export { ModernTextField } from './TextField/ModernTextField';
 export { ModernCard, CardHeader, CardTitle, CardSubtitle, CardContent, CardActions } from './Card/ModernCard';
 export { ModernAlert, type ModernAlertProps, type AlertSeverity } from './Alert/ModernAlert';
 
+// Navigation Components
+export * from './Navigation';
+
 // Form Components
 export * from './Form';
+
+// Dashboard Components
+export * from './Dashboard';
 
 // Import components for default export
 import { ModernButton } from './Button/ModernButton';

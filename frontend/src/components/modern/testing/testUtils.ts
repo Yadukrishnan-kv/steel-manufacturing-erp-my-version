@@ -6,6 +6,7 @@
 import React from 'react';
 import { render, RenderResult } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { modernTheme, modernDarkTheme } from '../../../theme/modernTheme';
 
 // Theme wrapper for testing
@@ -13,7 +14,15 @@ export const renderWithTheme = (ui: React.ReactElement, theme: 'light' | 'dark' 
   const selectedTheme = theme === 'dark' ? modernDarkTheme : modernTheme;
   
   return render(
-    React.createElement(ThemeProvider, { theme: selectedTheme }, ui)
+    React.createElement(
+      ThemeProvider, 
+      { theme: selectedTheme },
+      React.createElement(
+        StyledThemeProvider,
+        { theme: selectedTheme as any }, // Cast to any to avoid type conflicts
+        ui
+      )
+    )
   );
 };
 
@@ -180,6 +189,6 @@ export const cleanup = (): void => {
 };
 
 // Property-based testing runner
-export const runPropertyTest = <T>(property: any, options: any = {}): void => {
+export const runPropertyTest = (property: any, options: any = {}): void => {
   // Simplified implementation
 };
