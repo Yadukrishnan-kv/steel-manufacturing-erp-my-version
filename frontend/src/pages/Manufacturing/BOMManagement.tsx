@@ -57,6 +57,7 @@ import {
   useApproveBOMMutation,
   useGetBOMCostQuery,
   useCreateEngineeringChangeMutation,
+  useCreateBOMMutation,
 } from '../../services/api';
 
 interface BOM {
@@ -115,6 +116,15 @@ const BOMManagement: React.FC = () => {
     anchorEl: null,
     bom: null,
   });
+  const [createBOMDialog, setCreateBOMDialog] = useState(false);
+  const [createBOMLoading, setCreateBOMLoading] = useState(false);
+  const [createBOMError, setCreateBOMError] = useState<string | null>(null);
+  const [newBOMData, setNewBOMData] = useState({
+    productId: '',
+    revision: '',
+    effectiveDate: new Date().toISOString().split('T')[0],
+    items: [] as any[],
+  });
 
   // API hooks
   const {
@@ -140,6 +150,7 @@ const BOMManagement: React.FC = () => {
 
   const [approveBOM] = useApproveBOMMutation();
   const [createEngineeringChange] = useCreateEngineeringChangeMutation();
+  const [createBOM] = useCreateBOMMutation();
 
   // Extract data from API response
   const boms = Array.isArray(bomsData) ? bomsData : bomsData?.data || [];
@@ -173,6 +184,32 @@ const BOMManagement: React.FC = () => {
       setEngineeringChangeDialog(false);
     } catch (error) {
       console.error('Failed to create engineering change:', error);
+    }
+  };
+
+  const handleCreateBOM = async () => {
+    setCreateBOMLoading(true);
+    setCreateBOMError(null);
+    try {
+      const bomData = {
+        ...newBOMData,
+        effectiveDate: new Date(newBOMData.effectiveDate).toISOString(),
+        items: [], // Start with empty items array - can be added later
+      };
+      await createBOM(bomData).unwrap();
+      setCreateBOMDialog(false);
+      setNewBOMData({
+        productId: '',
+        revision: '',
+        effectiveDate: new Date().toISOString().split('T')[0],
+        items: [],
+      });
+      refetch();
+    } catch (error: any) {
+      console.error('Failed to create BOM:', error);
+      setCreateBOMError(error?.data?.message || 'Failed to create BOM. Please try again.');
+    } finally {
+      setCreateBOMLoading(false);
     }
   };
 
@@ -288,7 +325,7 @@ const BOMManagement: React.FC = () => {
               variant="contained"
               size="small"
               startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-              onClick={() => navigate('/manufacturing/create-bom')}
+              onClick={() => setCreateBOMDialog(true)}
               sx={{
                 textTransform: 'none',
                 fontWeight: 600,
@@ -896,6 +933,101 @@ const BOMManagement: React.FC = () => {
               }}
             >
               Create Request
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create BOM Dialog */}
+        <Dialog 
+          open={createBOMDialog} 
+          onClose={() => {
+            if (!createBOMLoading) {
+              setCreateBOMDialog(false);
+              setCreateBOMError(null);
+              setNewBOMData({
+                productId: '',
+                revision: '',
+                effectiveDate: new Date().toISOString().split('T')[0],
+                items: [],
+              });
+            }
+          }} 
+          maxWidth="md" 
+          fullWidth
+        >
+          <DialogTitle>Create New BOM</DialogTitle>
+          <DialogContent>
+            {createBOMError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {createBOMError}
+              </Alert>
+            )}
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Product ID"
+                  value={newBOMData.productId}
+                  onChange={(e) => setNewBOMData(prev => ({ ...prev, productId: e.target.value }))}
+                  disabled={createBOMLoading}
+                  required
+                  helperText="Enter the UUID of the product"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Revision"
+                  value={newBOMData.revision}
+                  onChange={(e) => setNewBOMData(prev => ({ ...prev, revision: e.target.value }))}
+                  disabled={createBOMLoading}
+                  required
+                  helperText="e.g., Rev-001, V1.0"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Effective Date"
+                  type="date"
+                  value={newBOMData.effectiveDate}
+                  onChange={(e) => setNewBOMData(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                  disabled={createBOMLoading}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Note: BOM items can be added after creation through the BOM details view.
+                </Typography>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setCreateBOMDialog(false);
+                setCreateBOMError(null);
+                setNewBOMData({
+                  productId: '',
+                  revision: '',
+                  effectiveDate: new Date().toISOString().split('T')[0],
+                  items: [],
+                });
+              }}
+              disabled={createBOMLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleCreateBOM}
+              disabled={!newBOMData.productId || !newBOMData.revision || createBOMLoading}
+            >
+              {createBOMLoading ? 'Creating...' : 'Create BOM'}
             </Button>
           </DialogActions>
         </Dialog>

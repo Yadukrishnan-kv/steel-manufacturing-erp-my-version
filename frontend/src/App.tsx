@@ -144,13 +144,33 @@ const App: React.FC = () => {
         {/* Sales routes */}
         <Route path="sales" element={
           <React.Suspense fallback={<CircularProgress />}>
-            {React.createElement(React.lazy(() => import('./pages/Sales/SalesOrderManagement')))}
+            {React.createElement(React.lazy(() => import('./pages/Sales/SalesDashboard')))}
+          </React.Suspense>
+        } />
+        <Route path="sales/dashboard" element={
+          <React.Suspense fallback={<CircularProgress />}>
+            {React.createElement(React.lazy(() => import('./pages/Sales/SalesDashboard')))}
           </React.Suspense>
         } />
         <Route path="sales/lead-management" element={
+          <React.Suspense fallback={<CircularProgress />}>
+            {React.createElement(React.lazy(() => import('./pages/Sales/LeadManagement')))}
+          </React.Suspense>
+        } />
+        <Route path="sales/estimates" element={
+          <React.Suspense fallback={<CircularProgress />}>
+            {React.createElement(React.lazy(() => import('./pages/Sales/EstimateManagement')))}
+          </React.Suspense>
+        } />
+        <Route path="sales/orders" element={
+          <React.Suspense fallback={<CircularProgress />}>
+            {React.createElement(React.lazy(() => import('./pages/Sales/SalesOrderManagement')))}
+          </React.Suspense>
+        } />
+        <Route path="sales/customers" element={
           <Box sx={{ p: 2 }}>
-            <h2>Lead Management</h2>
-            <p>Create, track, and manage leads from external sources will be implemented.</p>
+            <h2>Customer Management</h2>
+            <p>Full CRUD operations for customers will be implemented.</p>
           </Box>
         } />
         <Route path="sales/site-measurements" element={
@@ -159,37 +179,13 @@ const App: React.FC = () => {
             <p>Geo-tagged measurement capture with photos will be implemented.</p>
           </Box>
         } />
-        <Route path="sales/estimation-generation" element={
-          <Box sx={{ p: 2 }}>
-            <h2>Estimation Generation</h2>
-            <p>Comprehensive pricing calculations will be implemented.</p>
-          </Box>
-        } />
         <Route path="sales/discount-approval" element={
           <Box sx={{ p: 2 }}>
             <h2>Discount Approval Workflow</h2>
             <p>Multi-level discount approval routing will be implemented.</p>
           </Box>
         } />
-        <Route path="sales/customer-management" element={
-          <Box sx={{ p: 2 }}>
-            <h2>Customer Management</h2>
-            <p>Full CRUD operations for customers will be implemented.</p>
-          </Box>
-        } />
-        <Route path="sales/lead-status-updates" element={
-          <Box sx={{ p: 2 }}>
-            <h2>Lead Status Updates</h2>
-            <p>Lead progression tracking will be implemented.</p>
-          </Box>
-        } />
-        <Route path="sales/estimate-approval" element={
-          <Box sx={{ p: 2 }}>
-            <h2>Estimate Approval</h2>
-            <p>Estimate approval workflows will be implemented.</p>
-          </Box>
-        } />
-        <Route path="sales/sales-analytics" element={
+        <Route path="sales/analytics" element={
           <Box sx={{ p: 2 }}>
             <h2>Sales Analytics</h2>
             <p>Performance metrics and reporting will be implemented.</p>

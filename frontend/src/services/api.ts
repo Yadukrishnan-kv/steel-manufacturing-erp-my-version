@@ -22,11 +22,15 @@ export const api = createApi({
     'User',
     'ProductionOrder',
     'SalesOrder',
+    'Lead',
+    'Estimate',
+    'Customer',
+    'SalesAnalytics',
+    'FollowUpTasks',
     'Inventory',
     'QCInspection',
     'ServiceRequest',
     'Employee',
-    'Customer',
     'Supplier',
     'Dashboard',
     'BOM',
@@ -292,9 +296,18 @@ export const api = createApi({
     }),
     
     // Sales endpoints
-    getSalesOrders: builder.query<any[], void>({
-      query: () => '/sales/orders',
-      transformResponse: (response: any) => response.data || [],
+    getSalesOrders: builder.query<any, { page?: number; limit?: number; status?: string; customerId?: string; branchId?: string; search?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/orders',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || { orders: [], pagination: {} },
+      providesTags: ['SalesOrder'],
+    }),
+    
+    getSalesOrder: builder.query<any, string>({
+      query: (id) => `/sales/orders/${id}`,
+      transformResponse: (response: any) => response.data,
       providesTags: ['SalesOrder'],
     }),
     
@@ -307,12 +320,177 @@ export const api = createApi({
       invalidatesTags: ['SalesOrder'],
     }),
     
+    // Lead Management
+    getLeads: builder.query<any, { page?: number; limit?: number; status?: string; source?: string; assignedTo?: string; priority?: string; search?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/leads',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || { leads: [], pagination: {} },
+      providesTags: ['Lead'],
+    }),
+    
+    getLead: builder.query<any, string>({
+      query: (id) => `/sales/leads/${id}`,
+      transformResponse: (response: any) => response.data,
+      providesTags: ['Lead'],
+    }),
+    
+    createLead: builder.mutation<any, any>({
+      query: (leadData) => ({
+        url: '/sales/leads',
+        method: 'POST',
+        body: leadData,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
+    updateLeadStatus: builder.mutation<any, { id: string; status: string; followUpDate?: string; notes?: string }>({
+      query: ({ id, ...data }) => ({
+        url: `/sales/leads/${id}/status`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
+    assignLead: builder.mutation<any, { id: string; assignedTo: string; notes?: string }>({
+      query: ({ id, ...data }) => ({
+        url: `/sales/leads/${id}/assign`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
+    bulkAssignLeads: builder.mutation<any, { leadIds: string[]; assignedTo: string }>({
+      query: (data) => ({
+        url: '/sales/leads/bulk-assign',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
+    getLeadAssignmentRecommendations: builder.query<any, string>({
+      query: (leadId) => `/sales/leads/${leadId}/assignment-recommendations`,
+      transformResponse: (response: any) => response.data,
+    }),
+    
+    // Site Measurements
+    captureSiteMeasurement: builder.mutation<any, any>({
+      query: (measurementData) => ({
+        url: '/sales/measurements',
+        method: 'POST',
+        body: measurementData,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
+    // Estimates
+    getEstimates: builder.query<any, { page?: number; limit?: number; status?: string; approvalStatus?: string; customerId?: string; search?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/estimates',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || { estimates: [], pagination: {} },
+      providesTags: ['Estimate'],
+    }),
+    
+    getEstimate: builder.query<any, string>({
+      query: (id) => `/sales/estimates/${id}/details`,
+      transformResponse: (response: any) => response.data,
+      providesTags: ['Estimate'],
+    }),
+    
     createEstimation: builder.mutation<any, any>({
       query: (estimationData) => ({
         url: '/sales/estimates',
         method: 'POST',
         body: estimationData,
       }),
+      invalidatesTags: ['Estimate', 'Lead'],
+    }),
+    
+    approveEstimate: builder.mutation<any, { id: string; approvalLevel?: number; notes?: string }>({
+      query: ({ id, ...data }) => ({
+        url: `/sales/estimates/${id}/approve`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Estimate', 'Lead'],
+    }),
+    
+    // Discount Approval
+    processDiscountApproval: builder.mutation<any, any>({
+      query: (approvalData) => ({
+        url: '/sales/discount-approval',
+        method: 'POST',
+        body: approvalData,
+      }),
+      invalidatesTags: ['Estimate'],
+    }),
+    
+    // Customer Management
+    getCustomers: builder.query<any, { page?: number; limit?: number; search?: string; branchId?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/customers',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || { customers: [], pagination: {} },
+      providesTags: ['Customer'],
+    }),
+    
+    getCustomer: builder.query<any, string>({
+      query: (id) => `/sales/customers/${id}`,
+      transformResponse: (response: any) => response.data,
+      providesTags: ['Customer'],
+    }),
+    
+    createCustomer: builder.mutation<any, any>({
+      query: (customerData) => ({
+        url: '/sales/customers',
+        method: 'POST',
+        body: customerData,
+      }),
+      invalidatesTags: ['Customer'],
+    }),
+    
+    // Sales Analytics
+    getSalesAnalytics: builder.query<any, { branchId?: string; startDate?: string; endDate?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/analytics',
+        params,
+      }),
+      transformResponse: (response: any) => response.data,
+      providesTags: ['SalesAnalytics'],
+    }),
+    
+    getSalesPipelineAnalytics: builder.query<any, { branchId?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/pipeline-analytics',
+        params,
+      }),
+      transformResponse: (response: any) => response.data,
+      providesTags: ['SalesAnalytics'],
+    }),
+    
+    getSalesDashboard: builder.query<any, { branchId?: string; period?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/dashboard',
+        params,
+      }),
+      transformResponse: (response: any) => response.data,
+      providesTags: ['SalesAnalytics'],
+    }),
+    
+    getFollowUpTasks: builder.query<any, { assignedTo?: string; priority?: string }>({
+      query: (params = {}) => ({
+        url: '/sales/follow-up-tasks',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['FollowUpTasks'],
     }),
     
     // Inventory endpoints
@@ -558,9 +736,44 @@ export const {
   useCreateEngineeringChangeMutation,
   useCalculateDeliveryDateMutation,
   useGetBranchesQuery,
+  
+  // Sales Order hooks
   useGetSalesOrdersQuery,
+  useGetSalesOrderQuery,
   useCreateSalesOrderMutation,
+  
+  // Lead Management hooks
+  useGetLeadsQuery,
+  useGetLeadQuery,
+  useCreateLeadMutation,
+  useUpdateLeadStatusMutation,
+  useAssignLeadMutation,
+  useBulkAssignLeadsMutation,
+  useGetLeadAssignmentRecommendationsQuery,
+  
+  // Site Measurement hooks
+  useCaptureSiteMeasurementMutation,
+  
+  // Estimate hooks
+  useGetEstimatesQuery,
+  useGetEstimateQuery,
   useCreateEstimationMutation,
+  useApproveEstimateMutation,
+  
+  // Discount Approval hooks
+  useProcessDiscountApprovalMutation,
+  
+  // Customer Management hooks
+  useGetCustomersQuery,
+  useGetCustomerQuery,
+  useCreateCustomerMutation,
+  
+  // Sales Analytics hooks
+  useGetSalesAnalyticsQuery,
+  useGetSalesPipelineAnalyticsQuery,
+  useGetSalesDashboardQuery,
+  useGetFollowUpTasksQuery,
+  
   useGetInventoryItemsQuery,
   useGetStockLevelsQuery,
   useCreateInventoryItemMutation,
