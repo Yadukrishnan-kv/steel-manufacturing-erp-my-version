@@ -340,7 +340,6 @@ const AppLayout: React.FC = () => {
       <Box sx={{ display: 'flex', height: '100vh', width: '100%' }}>
         {/* Modern App Bar */}
         <ModernAppBar
-          title="SteelForge Manufacturing ERP"
           user={user ? {
             firstName: user.firstName,
             lastName: user.lastName,

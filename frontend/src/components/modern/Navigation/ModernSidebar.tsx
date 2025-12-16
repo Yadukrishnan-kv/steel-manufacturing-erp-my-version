@@ -400,7 +400,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
             }} />
           </NavigationIcon>
           <LogoText $collapsed={collapsed}>
-            SteelForge
+            ERP
           </LogoText>
         </LogoContainer>
         
