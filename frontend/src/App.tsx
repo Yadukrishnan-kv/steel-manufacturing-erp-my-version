@@ -29,7 +29,7 @@ const App: React.FC = () => {
     if (currentUser && !user) {
       dispatch(setUser(currentUser));
     }
-  }, [currentUser, user, dispatch]);
+  }, [currentUser?.id, user?.id, dispatch]);
 
   // Show loading while checking authentication
   if (isLoading && token && !user) {

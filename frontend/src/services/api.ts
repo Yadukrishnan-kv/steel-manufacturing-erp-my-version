@@ -4,7 +4,7 @@ import type { LoginCredentials, LoginResponse, User } from '../types/auth';
 
 // Base query with authentication
 const baseQuery = fetchBaseQuery({
-  baseUrl: '/api',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
@@ -38,6 +38,14 @@ export const api = createApi({
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response: any) => ({
+        user: {
+          ...response.data.user,
+          role: response.data.user.roles[0] || 'user', // Take first role as primary role
+          permissions: response.data.user.roles || [], // Use roles as permissions for now
+        },
+        token: response.data.tokens.accessToken,
+      }),
       invalidatesTags: ['User'],
     }),
     
@@ -51,6 +59,11 @@ export const api = createApi({
     
     getCurrentUser: builder.query<User, void>({
       query: () => '/auth/me',
+      transformResponse: (response: any) => ({
+        ...response.data.user,
+        role: response.data.user.roles[0] || 'user', // Take first role as primary role
+        permissions: response.data.user.roles || [], // Use roles as permissions for now
+      }),
       providesTags: ['User'],
     }),
     

@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { alertService } from '../services/alert.service';
-import { authenticateToken } from '../middleware/auth';
-import { validateRequest } from '../middleware/validation';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validation';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -44,14 +44,14 @@ const alertUpdateSchema = z.object({
 });
 
 // Apply authentication to all routes
-router.use(authenticateToken);
+router.use(authenticate);
 
 /**
  * @route POST /api/v1/alerts/sla-configurations
  * @desc Create SLA configuration
  * @access Private
  */
-router.post('/sla-configurations', validateRequest(slaConfigurationSchema), async (req: Request, res: Response) => {
+router.post('/sla-configurations', validate({ body: slaConfigurationSchema }), async (req: Request, res: Response) => {
   try {
     const slaConfig = await alertService.createSLAConfiguration(req.body);
     
@@ -127,7 +127,7 @@ router.put('/sla-configurations/:id', async (req: Request, res: Response) => {
  * @desc Create alert
  * @access Private
  */
-router.post('/', validateRequest(alertSchema), async (req: Request, res: Response) => {
+router.post('/', validate({ body: alertSchema }), async (req: Request, res: Response) => {
   try {
     const alertData = {
       ...req.body,
@@ -196,7 +196,7 @@ router.get('/', async (req: Request, res: Response) => {
  * @desc Update alert
  * @access Private
  */
-router.put('/:id', validateRequest(alertUpdateSchema), async (req: Request, res: Response) => {
+router.put('/:id', validate({ body: alertUpdateSchema }), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updates = {
@@ -225,7 +225,7 @@ router.put('/:id', validateRequest(alertUpdateSchema), async (req: Request, res:
  * @desc Send alert notification
  * @access Private
  */
-router.post('/notifications', validateRequest(alertNotificationSchema), async (req: Request, res: Response) => {
+router.post('/notifications', validate({ body: alertNotificationSchema }), async (req: Request, res: Response) => {
   try {
     const result = await alertService.sendAlertNotification(req.body);
     

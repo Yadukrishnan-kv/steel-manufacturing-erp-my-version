@@ -26,3 +26,22 @@ export interface LoginResponse {
   user: User;
   token: string;
 }
+
+export interface BackendLoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      email: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+      roles: string[];
+    };
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+  };
+}

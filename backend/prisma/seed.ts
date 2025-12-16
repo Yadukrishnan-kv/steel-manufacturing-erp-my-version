@@ -255,46 +255,149 @@ async function main() {
     }
   }
 
-  // Create default admin user
-  console.log('Creating default admin user...');
-  const hashedPassword = await bcrypt.hash('admin123', 12);
-  
-  const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@steel-erp.com' },
-    update: {},
-    create: {
-      email: 'admin@steel-erp.com',
-      username: 'admin',
-      password: hashedPassword,
-      firstName: 'Admin',
-      lastName: 'User',
+  // Create test users
+  console.log('Creating test users...');
+  const testUsers = [
+    {
+      email: 'admin@steelmanufacturing.com',
+      username: 'system_admin',
+      password: 'Admin123!',
+      firstName: 'System',
+      lastName: 'Administrator',
       phone: '9999999999',
+      roleName: 'SUPER_ADMIN',
+      branchCode: null,
     },
-  });
+    {
+      email: 'manager.kerala@steelmanufacturing.com',
+      username: 'manager_kerala',
+      password: 'Manager123!',
+      firstName: 'Kerala',
+      lastName: 'Manager',
+      phone: '9999999998',
+      roleName: 'BRANCH_MANAGER',
+      branchCode: 'KL001',
+    },
+    {
+      email: 'production@steelmanufacturing.com',
+      username: 'production_mgr',
+      password: 'Production123!',
+      firstName: 'Production',
+      lastName: 'Manager',
+      phone: '9999999997',
+      roleName: 'PRODUCTION_MANAGER',
+      branchCode: 'KL001',
+    },
+    {
+      email: 'sales@steelmanufacturing.com',
+      username: 'sales_exec',
+      password: 'Sales123!',
+      firstName: 'Sales',
+      lastName: 'Executive',
+      phone: '9999999996',
+      roleName: 'SALES_EXECUTIVE',
+      branchCode: 'KL001',
+    },
+    {
+      email: 'qc@steelmanufacturing.com',
+      username: 'qc_inspector',
+      password: 'QC123!',
+      firstName: 'Quality',
+      lastName: 'Inspector',
+      phone: '9999999995',
+      roleName: 'QC_INSPECTOR',
+      branchCode: 'KL001',
+    },
+    {
+      email: 'service@steelmanufacturing.com',
+      username: 'service_tech',
+      password: 'Service123!',
+      firstName: 'Service',
+      lastName: 'Technician',
+      phone: '9999999994',
+      roleName: 'SALES_EXECUTIVE', // Service role maps to sales executive for now
+      branchCode: 'KL001',
+    },
+    {
+      email: 'employee@steelmanufacturing.com',
+      username: 'test_employee',
+      password: 'Employee123!',
+      firstName: 'Test',
+      lastName: 'Employee',
+      phone: '9999999993',
+      roleName: 'STORE_KEEPER',
+      branchCode: 'KL001',
+    },
+  ];
 
-  // Assign Super Admin role to admin user
-  const superAdminRole = await prisma.role.findUnique({
-    where: { name: 'SUPER_ADMIN' },
-  });
-
-  if (superAdminRole) {
-    // Check if user role already exists
-    const existingUserRole = await prisma.userRole.findFirst({
+  for (const userData of testUsers) {
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    
+    // Check if user already exists by email or username
+    const existingUser = await prisma.user.findFirst({
       where: {
-        userId: adminUser.id,
-        roleId: superAdminRole.id,
-        branchId: null,
-      },
+        OR: [
+          { email: userData.email },
+          { username: userData.username }
+        ]
+      }
     });
 
-    if (!existingUserRole) {
-      await prisma.userRole.create({
+    let user;
+    if (existingUser) {
+      // Update existing user
+      user = await prisma.user.update({
+        where: { id: existingUser.id },
         data: {
-          userId: adminUser.id,
-          roleId: superAdminRole.id,
-          branchId: null,
+          email: userData.email,
+          username: userData.username,
+          password: hashedPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
         },
       });
+    } else {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          email: userData.email,
+          username: userData.username,
+          password: hashedPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+        },
+      });
+    }
+
+    // Assign role to user
+    const role = await prisma.role.findUnique({
+      where: { name: userData.roleName },
+    });
+
+    const branch = userData.branchCode ? await prisma.branch.findUnique({
+      where: { code: userData.branchCode },
+    }) : null;
+
+    if (role) {
+      const existingUserRole = await prisma.userRole.findFirst({
+        where: {
+          userId: user.id,
+          roleId: role.id,
+          branchId: branch?.id || null,
+        },
+      });
+
+      if (!existingUserRole) {
+        await prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: role.id,
+            branchId: branch?.id || null,
+          },
+        });
+      }
     }
   }
 
@@ -423,6 +526,266 @@ async function main() {
     });
   }
 
+  // Create sample customers
+  console.log('Creating sample customers...');
+  const keralaBranch = await prisma.branch.findUnique({ where: { code: 'KL001' } });
+  const tamilNaduBranch = await prisma.branch.findUnique({ where: { code: 'TN001' } });
+
+  const customers = [
+    {
+      code: 'CUST001',
+      name: 'ABC Construction Ltd',
+      email: 'customer@example.com',
+      phone: '9876543210',
+      address: 'Construction House, MG Road',
+      city: 'Kochi',
+      state: 'Kerala',
+      pincode: '682001',
+      gstNumber: '32ABCDE1234F1Z1',
+      creditLimit: 500000,
+      branchId: keralaBranch?.id || '',
+    },
+    {
+      code: 'CUST002',
+      name: 'XYZ Builders Pvt Ltd',
+      email: 'contact@xyzbuilders.com',
+      phone: '9876543211',
+      address: 'Builder Plaza, Anna Salai',
+      city: 'Chennai',
+      state: 'Tamil Nadu',
+      pincode: '600001',
+      gstNumber: '33ABCDE1234F1Z2',
+      creditLimit: 750000,
+      branchId: tamilNaduBranch?.id || '',
+    },
+  ];
+
+  const createdCustomers = [];
+  for (const customerData of customers) {
+    const customer = await prisma.customer.upsert({
+      where: { code: customerData.code },
+      update: customerData,
+      create: customerData,
+    });
+    createdCustomers.push(customer);
+
+    // Create customer portal credentials for the first customer
+    if (customerData.code === 'CUST001') {
+      const hashedCustomerPassword = await bcrypt.hash('Customer123!', 12);
+      await prisma.customerPortalCredentials.upsert({
+        where: { customerId: customer.id },
+        update: {
+          password: hashedCustomerPassword,
+        },
+        create: {
+          customerId: customer.id,
+          password: hashedCustomerPassword,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  // Create sample suppliers
+  console.log('Creating sample suppliers...');
+  const suppliers = [
+    {
+      code: 'SUPP001',
+      name: 'Steel India Ltd',
+      email: 'sales@steelindia.com',
+      phone: '9876543220',
+      address: 'Steel Complex, Industrial Area',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      pincode: '400001',
+      gstNumber: '27ABCDE1234F1Z1',
+      rating: 4.5,
+      branchId: keralaBranch?.id || '',
+    },
+    {
+      code: 'SUPP002',
+      name: 'Hardware Solutions',
+      email: 'info@hardwaresolutions.com',
+      phone: '9876543221',
+      address: 'Hardware Plaza, Commercial Street',
+      city: 'Bangalore',
+      state: 'Karnataka',
+      pincode: '560001',
+      gstNumber: '29ABCDE1234F1Z2',
+      rating: 4.2,
+      branchId: keralaBranch?.id || '',
+    },
+  ];
+
+  for (const supplierData of suppliers) {
+    await prisma.supplier.upsert({
+      where: { code: supplierData.code },
+      update: supplierData,
+      create: supplierData,
+    });
+  }
+
+  // Create sample inventory items
+  console.log('Creating sample inventory items...');
+  const rawMaterialWarehouse = await prisma.warehouse.findFirst({
+    where: { code: 'KL001-RAW' }
+  });
+  const finishedGoodsWarehouse = await prisma.warehouse.findFirst({
+    where: { code: 'KL001-FG' }
+  });
+
+  const inventoryItems = [
+    {
+      itemCode: 'STEEL-001',
+      name: 'Mild Steel Sheet 2mm',
+      description: 'Mild Steel Sheet 2mm thickness',
+      category: 'RAW_MATERIAL',
+      unit: 'SQM',
+      standardCost: 150.00,
+      reorderLevel: 100,
+      safetyStock: 50,
+      leadTimeDays: 7,
+      isBatchTracked: true,
+      warehouseId: rawMaterialWarehouse?.id || '',
+    },
+    {
+      itemCode: 'STEEL-002',
+      name: 'Stainless Steel Sheet 1.5mm',
+      description: 'Stainless Steel Sheet 1.5mm thickness',
+      category: 'RAW_MATERIAL',
+      unit: 'SQM',
+      standardCost: 350.00,
+      reorderLevel: 50,
+      safetyStock: 25,
+      leadTimeDays: 10,
+      isBatchTracked: true,
+      warehouseId: rawMaterialWarehouse?.id || '',
+    },
+    {
+      itemCode: 'COATING-001',
+      name: 'Powder Coating - White',
+      description: 'White powder coating material',
+      category: 'RAW_MATERIAL',
+      unit: 'KG',
+      standardCost: 250.00,
+      reorderLevel: 20,
+      safetyStock: 10,
+      leadTimeDays: 5,
+      isBatchTracked: true,
+      warehouseId: rawMaterialWarehouse?.id || '',
+    },
+    {
+      itemCode: 'HARDWARE-001',
+      name: 'Door Handle Set - Standard',
+      description: 'Standard door handle set with lock',
+      category: 'RAW_MATERIAL',
+      unit: 'SET',
+      standardCost: 450.00,
+      reorderLevel: 25,
+      safetyStock: 15,
+      leadTimeDays: 3,
+      isBatchTracked: false,
+      warehouseId: rawMaterialWarehouse?.id || '',
+    },
+    {
+      itemCode: 'DOOR-FG-001',
+      name: 'Standard Steel Door - Finished',
+      description: 'Complete steel door with frame and hardware',
+      category: 'FINISHED_GOOD',
+      unit: 'PCS',
+      standardCost: 8500.00,
+      reorderLevel: 5,
+      safetyStock: 2,
+      leadTimeDays: 0,
+      isBatchTracked: false,
+      warehouseId: finishedGoodsWarehouse?.id || '',
+    },
+  ];
+
+  for (const itemData of inventoryItems) {
+    await prisma.inventoryItem.upsert({
+      where: { itemCode: itemData.itemCode },
+      update: itemData,
+      create: itemData,
+    });
+  }
+
+  // Create sample employees
+  console.log('Creating sample employees...');
+  const employees = [
+    {
+      employeeCode: 'EMP001',
+      firstName: 'Rajesh',
+      lastName: 'Kumar',
+      email: 'employee@steelmanufacturing.com',
+      phone: '9999999993',
+      department: 'PRODUCTION',
+      designation: 'Production Operator',
+      dateOfJoining: new Date('2023-01-15'),
+      salary: 25000,
+      branchCode: 'KL001',
+    },
+    {
+      employeeCode: 'EMP002',
+      firstName: 'Priya',
+      lastName: 'Nair',
+      email: 'priya.nair@steelmanufacturing.com',
+      phone: '9999999992',
+      department: 'SALES',
+      designation: 'Sales Executive',
+      dateOfJoining: new Date('2023-02-01'),
+      salary: 30000,
+      branchCode: 'KL001',
+    },
+    {
+      employeeCode: 'EMP003',
+      firstName: 'Suresh',
+      lastName: 'Menon',
+      email: 'suresh.menon@steelmanufacturing.com',
+      phone: '9999999991',
+      department: 'QC',
+      designation: 'QC Inspector',
+      dateOfJoining: new Date('2023-03-01'),
+      salary: 28000,
+      branchCode: 'KL001',
+    },
+  ];
+
+  for (const empData of employees) {
+    const branch = await prisma.branch.findUnique({
+      where: { code: empData.branchCode },
+    });
+
+    if (branch) {
+      await prisma.employee.upsert({
+        where: { employeeCode: empData.employeeCode },
+        update: {
+          firstName: empData.firstName,
+          lastName: empData.lastName,
+          email: empData.email,
+          phone: empData.phone,
+          department: empData.department,
+          designation: empData.designation,
+          dateOfJoining: empData.dateOfJoining,
+          salary: empData.salary,
+        },
+        create: {
+          employeeCode: empData.employeeCode,
+          firstName: empData.firstName,
+          lastName: empData.lastName,
+          email: empData.email,
+          phone: empData.phone,
+          department: empData.department,
+          designation: empData.designation,
+          dateOfJoining: empData.dateOfJoining,
+          salary: empData.salary,
+          branchId: branch.id,
+          isActive: true,
+        },
+      });
+    }
+  }
+
   console.log('✅ Database seeding completed successfully!');
   console.log('📊 Created:');
   console.log(`   - ${permissions.length} permissions`);
@@ -431,11 +794,25 @@ async function main() {
   console.log(`   - ${branches.length * 2} warehouses`);
   console.log(`   - ${branches.length * 2 * 5} racks`);
   console.log(`   - ${branches.length * 2 * 5 * 10} bins`);
-  console.log(`   - 1 admin user (admin@steel-erp.com / admin123)`);
+  console.log(`   - ${testUsers.length} test users`);
+  console.log(`   - ${customers.length} sample customers`);
+  console.log(`   - ${suppliers.length} sample suppliers`);
+  console.log(`   - ${inventoryItems.length} inventory items`);
+  console.log(`   - ${employees.length} sample employees`);
   console.log(`   - ${products.length} sample products`);
   console.log(`   - ${workCenters.length} work centers`);
   console.log(`   - ${operations.length} operations`);
   console.log(`   - ${slaConfigs.length} SLA configurations`);
+  console.log('');
+  console.log('🔑 Test Login Credentials:');
+  console.log('   Super Admin: admin@steelmanufacturing.com / Admin123!');
+  console.log('   Branch Manager: manager.kerala@steelmanufacturing.com / Manager123!');
+  console.log('   Production Manager: production@steelmanufacturing.com / Production123!');
+  console.log('   Sales Executive: sales@steelmanufacturing.com / Sales123!');
+  console.log('   QC Inspector: qc@steelmanufacturing.com / QC123!');
+  console.log('   Service Technician: service@steelmanufacturing.com / Service123!');
+  console.log('   Customer Portal: customer@example.com / Customer123!');
+  console.log('   Employee Portal: employee@steelmanufacturing.com / Employee123!');
 }
 
 main()

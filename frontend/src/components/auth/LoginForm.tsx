@@ -44,7 +44,10 @@ const LoginForm: React.FC = () => {
       setError(null);
       
       const result = await login(data).unwrap();
-      dispatch(loginSuccess(result));
+      dispatch(loginSuccess({
+        user: result.user,
+        token: result.token
+      }));
       
       // Redirect to intended page or dashboard
       const from = location.state?.from?.pathname || '/dashboard';
