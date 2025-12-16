@@ -135,9 +135,36 @@ const customerSchema = z.object({
 // Lead Management Routes
 
 /**
- * POST /api/sales/leads
- * Create lead from external sources with source tracking
- * Validates: Requirements 4.1 - External lead source attribution
+ * @swagger
+ * /sales/leads:
+ *   post:
+ *     summary: Create a new lead
+ *     description: Create lead from external sources with source tracking
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateLead'
+ *     responses:
+ *       201:
+ *         description: Lead created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Lead'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/leads',
   authenticate,
@@ -165,8 +192,38 @@ router.post('/leads',
 );
 
 /**
- * GET /api/sales/leads/:id
- * Get lead with measurements and estimates
+ * @swagger
+ * /sales/leads/{id}:
+ *   get:
+ *     summary: Get lead by ID
+ *     description: Get lead with measurements and estimates
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     responses:
+ *       200:
+ *         description: Lead details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Lead'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leads/:id',
   authenticate,
@@ -204,9 +261,63 @@ router.get('/leads/:id',
 );
 
 /**
- * POST /api/sales/measurements
- * Capture geo-tagged site measurements with photos
- * Validates: Requirements 4.2 - Geo-tagged measurement documentation
+ * @swagger
+ * /sales/measurements:
+ *   post:
+ *     summary: Capture site measurements
+ *     description: Capture geo-tagged site measurements with photos for lead qualification
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [leadId, location, photos, measurements]
+ *             properties:
+ *               leadId:
+ *                 type: string
+ *                 format: uuid
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   latitude:
+ *                     type: number
+ *                   longitude:
+ *                     type: number
+ *                   accuracy:
+ *                     type: number
+ *                   address:
+ *                     type: string
+ *               photos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uri
+ *               measurements:
+ *                 type: object
+ *                 properties:
+ *                   width:
+ *                     type: number
+ *                   height:
+ *                     type: number
+ *                   depth:
+ *                     type: number
+ *                   area:
+ *                     type: number
+ *                   unit:
+ *                     type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Site measurement captured successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/measurements',
   authenticate,
@@ -234,9 +345,64 @@ router.post('/measurements',
 );
 
 /**
- * POST /api/sales/estimates
- * Generate comprehensive pricing estimation
- * Validates: Requirements 4.3 - Comprehensive pricing calculation
+ * @swagger
+ * /sales/estimates:
+ *   post:
+ *     summary: Generate pricing estimate
+ *     description: Generate comprehensive pricing estimation with material and labor costs
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [leadId, items]
+ *             properties:
+ *               leadId:
+ *                 type: string
+ *                 format: uuid
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                       format: uuid
+ *                     description:
+ *                       type: string
+ *                     quantity:
+ *                       type: number
+ *                     specifications:
+ *                       type: object
+ *               discountPercentage:
+ *                 type: number
+ *                 minimum: 0
+ *                 maximum: 50
+ *               validityDays:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Estimation generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Estimate'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/estimates',
   authenticate,
@@ -264,9 +430,40 @@ router.post('/estimates',
 );
 
 /**
- * POST /api/sales/discount-approval
- * Process discount approval through hierarchy routing
- * Validates: Requirements 4.4 - Discount approval workflow routing
+ * @swagger
+ * /sales/discount-approval:
+ *   post:
+ *     summary: Request discount approval
+ *     description: Process discount approval through hierarchy routing based on discount percentage
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [estimateId, discountPercentage, discountAmount, reason]
+ *             properties:
+ *               estimateId:
+ *                 type: string
+ *                 format: uuid
+ *               discountPercentage:
+ *                 type: number
+ *                 minimum: 0
+ *                 maximum: 50
+ *               discountAmount:
+ *                 type: number
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Discount approval request submitted successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/discount-approval',
   authenticate,
@@ -297,9 +494,68 @@ router.post('/discount-approval',
 );
 
 /**
- * POST /api/sales/orders
- * Create sales order with material validation and production conversion
- * Validates: Requirements 4.5 - Sales order conversion validation
+ * @swagger
+ * /sales/orders:
+ *   post:
+ *     summary: Create sales order
+ *     description: Create sales order with material validation and automatic production order conversion
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerId, deliveryDate, items, branchId]
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               estimateId:
+ *                 type: string
+ *                 format: uuid
+ *               deliveryDate:
+ *                 type: string
+ *                 format: date-time
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                       format: uuid
+ *                     description:
+ *                       type: string
+ *                     quantity:
+ *                       type: number
+ *                     unitPrice:
+ *                       type: number
+ *               discountAmount:
+ *                 type: number
+ *               taxAmount:
+ *                 type: number
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Sales order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/SalesOrder'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/orders',
   authenticate,
@@ -330,8 +586,38 @@ router.post('/orders',
 );
 
 /**
- * GET /api/sales/orders/:id
- * Get sales order with complete details
+ * @swagger
+ * /sales/orders/{id}:
+ *   get:
+ *     summary: Get sales order by ID
+ *     description: Get sales order with complete details including items and production orders
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Sales order ID
+ *     responses:
+ *       200:
+ *         description: Sales order details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/SalesOrder'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/orders/:id',
   authenticate,
@@ -371,8 +657,58 @@ router.get('/orders/:id',
 // Customer Management Routes
 
 /**
- * POST /api/sales/customers
- * Create customer master data
+ * @swagger
+ * /sales/customers:
+ *   post:
+ *     summary: Create customer
+ *     description: Create customer master data with contact and billing information
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, phone, address, city, state, pincode, branchId]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               pincode:
+ *                 type: string
+ *               gstNumber:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Customer created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Customer'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/customers',
   authenticate,
@@ -400,8 +736,59 @@ router.post('/customers',
 );
 
 /**
- * GET /api/sales/customers
- * Get all customers with pagination
+ * @swagger
+ * /sales/customers:
+ *   get:
+ *     summary: Get all customers
+ *     description: Get all customers with pagination and search
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name, phone, email, or code
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: List of customers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     customers:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Customer'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/customers',
   authenticate,
@@ -463,8 +850,38 @@ router.get('/customers',
 );
 
 /**
- * GET /api/sales/customers/:id
- * Get customer details
+ * @swagger
+ * /sales/customers/{id}:
+ *   get:
+ *     summary: Get customer by ID
+ *     description: Get customer details with recent orders and leads
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Customer ID
+ *     responses:
+ *       200:
+ *         description: Customer details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Customer'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/customers/:id',
   authenticate,
@@ -540,8 +957,38 @@ router.get('/customers/:id',
 // Analytics and Reporting Routes
 
 /**
- * GET /api/sales/analytics
- * Get sales analytics and reporting data
+ * @swagger
+ * /sales/analytics:
+ *   get:
+ *     summary: Get sales analytics
+ *     description: Get sales analytics and reporting data with date range filtering
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for analytics
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for analytics
+ *     responses:
+ *       200:
+ *         description: Sales analytics data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/analytics',
   authenticate,
@@ -573,8 +1020,77 @@ router.get('/analytics',
 );
 
 /**
- * GET /api/sales/leads
- * Get all leads with filtering and pagination
+ * @swagger
+ * /sales/leads:
+ *   get:
+ *     summary: Get all leads
+ *     description: Get all leads with filtering and pagination
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [NEW, CONTACTED, QUALIFIED, PROPOSAL, NEGOTIATION, WON, LOST]
+ *         description: Filter by status
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [META, GOOGLE, REFERRAL, DIRECT]
+ *         description: Filter by source
+ *       - in: query
+ *         name: assignedTo
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by assigned user
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [LOW, MEDIUM, HIGH]
+ *         description: Filter by priority
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name, phone, email, or lead number
+ *     responses:
+ *       200:
+ *         description: List of leads
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     leads:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Lead'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leads',
   authenticate,
@@ -670,8 +1186,70 @@ router.get('/leads',
 );
 
 /**
- * GET /api/sales/estimates
- * Get all estimates with filtering and pagination
+ * @swagger
+ * /sales/estimates:
+ *   get:
+ *     summary: Get all estimates
+ *     description: Get all estimates with filtering and pagination
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [DRAFT, SENT, APPROVED, REJECTED, EXPIRED]
+ *         description: Filter by status
+ *       - in: query
+ *         name: approvalStatus
+ *         schema:
+ *           type: string
+ *         description: Filter by approval status
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by customer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by estimate number
+ *     responses:
+ *       200:
+ *         description: List of estimates
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     estimates:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Estimate'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/estimates',
   authenticate,
@@ -758,8 +1336,71 @@ router.get('/estimates',
 );
 
 /**
- * GET /api/sales/orders
- * Get all sales orders with filtering and pagination
+ * @swagger
+ * /sales/orders:
+ *   get:
+ *     summary: Get all sales orders
+ *     description: Get all sales orders with filtering and pagination
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [DRAFT, CONFIRMED, IN_PRODUCTION, READY, DELIVERED, CANCELLED]
+ *         description: Filter by status
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by customer
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by order number
+ *     responses:
+ *       200:
+ *         description: List of sales orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     orders:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/SalesOrder'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/orders',
   authenticate,
@@ -856,8 +1497,43 @@ router.get('/orders',
 );
 
 /**
- * PUT /api/sales/leads/:id/status
- * Update lead status
+ * @swagger
+ * /sales/leads/{id}/status:
+ *   put:
+ *     summary: Update lead status
+ *     description: Update lead status with optional follow-up date
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [NEW, CONTACTED, QUALIFIED, PROPOSAL, NEGOTIATION, WON, LOST]
+ *               followUpDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Lead status updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/leads/:id/status',
   authenticate,
@@ -906,8 +1582,40 @@ router.put('/leads/:id/status',
 );
 
 /**
- * PUT /api/sales/estimates/:id/approve
- * Approve estimate with workflow validation
+ * @swagger
+ * /sales/estimates/{id}/approve:
+ *   put:
+ *     summary: Approve estimate
+ *     description: Approve estimate with workflow validation based on approval level
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Estimate ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               approvalLevel:
+ *                 type: integer
+ *                 default: 1
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Estimate approved successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/estimates/:id/approve',
   authenticate,
@@ -953,8 +1661,26 @@ router.put('/estimates/:id/approve',
 );
 
 /**
- * GET /api/sales/pipeline-analytics
- * Get sales pipeline analytics and conversion metrics
+ * @swagger
+ * /sales/pipeline-analytics:
+ *   get:
+ *     summary: Get pipeline analytics
+ *     description: Get sales pipeline analytics and conversion metrics
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Pipeline analytics data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/pipeline-analytics',
   authenticate,
@@ -982,8 +1708,27 @@ router.get('/pipeline-analytics',
 );
 
 /**
- * GET /api/sales/leads/:id/assignment-recommendations
- * Get lead assignment recommendations
+ * @swagger
+ * /sales/leads/{id}/assignment-recommendations:
+ *   get:
+ *     summary: Get lead assignment recommendations
+ *     description: Get AI-powered lead assignment recommendations based on workload and expertise
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     responses:
+ *       200:
+ *         description: Assignment recommendations
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leads/:id/assignment-recommendations',
   authenticate,
@@ -1022,8 +1767,42 @@ router.get('/leads/:id/assignment-recommendations',
 );
 
 /**
- * PUT /api/sales/leads/:id/assign
- * Assign lead to sales representative
+ * @swagger
+ * /sales/leads/{id}/assign:
+ *   put:
+ *     summary: Assign lead
+ *     description: Assign lead to sales representative
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [assignedTo]
+ *             properties:
+ *               assignedTo:
+ *                 type: string
+ *                 format: uuid
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Lead assigned successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/leads/:id/assign',
   authenticate,
@@ -1079,8 +1858,33 @@ router.put('/leads/:id/assign',
 );
 
 /**
- * GET /api/sales/dashboard
- * Get comprehensive sales dashboard data
+ * @swagger
+ * /sales/dashboard:
+ *   get:
+ *     summary: Get sales dashboard
+ *     description: Get comprehensive sales dashboard data with KPIs and metrics
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [TODAY, WEEK, MONTH, QUARTER]
+ *           default: MONTH
+ *         description: Time period for dashboard data
+ *     responses:
+ *       200:
+ *         description: Sales dashboard data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboard',
   authenticate,

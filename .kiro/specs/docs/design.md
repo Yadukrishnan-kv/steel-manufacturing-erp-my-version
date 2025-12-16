@@ -724,6 +724,277 @@ Is it a primary brand color?
 </Button>
 ```
 
+### 7. Modal and Dialog Patterns
+
+#### Dialog Container
+```tsx
+<Dialog
+  open={dialogOpen}
+  onClose={handleCloseDialog}
+  maxWidth="md"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: 1.5,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+    }
+  }}
+>
+```
+
+#### Dialog Header (Compact Pattern)
+```tsx
+<DialogTitle sx={{
+  pb: 1,
+  borderBottom: '2px solid',
+  borderColor: theme.palette.primary.main,
+  background: `linear-gradient(135deg, ${theme.palette.primary.light}15 0%, #ffffff 100%)`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1.5
+}}>
+  <Box sx={{
+    p: 0.75,
+    borderRadius: 1,
+    backgroundColor: theme.palette.primary.main,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}>
+    <Icon sx={{ fontSize: 20, color: 'white' }} />
+  </Box>
+  <Box>
+    <Typography variant="h6" sx={{
+      fontWeight: 600,
+      fontSize: '1rem',
+      color: theme.palette.text.primary,
+      mb: 0
+    }}>
+      Dialog Title
+    </Typography>
+    <Typography variant="caption" sx={{
+      color: theme.palette.text.secondary,
+      fontSize: '0.7rem'
+    }}>
+      Dialog description or subtitle
+    </Typography>
+  </Box>
+</DialogTitle>
+```
+
+#### Dialog Content with External Field Labels (NEW PATTERN)
+```tsx
+<DialogContent sx={{ py: 1.5 }}>
+  <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
+    <Grid item xs={12} md={6}>
+      {/* External Field Label */}
+      <Typography variant="caption" sx={{ 
+        color: theme.palette.text.secondary,
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        mb: 0.5,
+        display: 'block'
+      }}>
+        Field Name
+      </Typography>
+      
+      {/* Input Field without internal label */}
+      <Controller
+        name="fieldName"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            fullWidth
+            size="small"
+            placeholder="Enter field value"
+            error={!!errors.fieldName}
+            sx={{
+              '& .MuiInputBase-root': { fontSize: '0.875rem' },
+              '& .MuiInputBase-input': { py: 0.75 }
+            }}
+          />
+        )}
+      />
+      
+      {/* External Error Message */}
+      {errors.fieldName && (
+        <Typography variant="caption" color="error" sx={{ 
+          fontSize: '0.75rem', 
+          mt: 0.5, 
+          display: 'block' 
+        }}>
+          {errors.fieldName.message}
+        </Typography>
+      )}
+    </Grid>
+  </Grid>
+</DialogContent>
+```
+
+#### External Field Label Specifications
+```typescript
+// Field Label Styling (REQUIRED PATTERN)
+fieldLabel: {
+  color: theme.palette.text.secondary,
+  fontSize: '0.75rem',           // 12px
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+  marginBottom: '0.5',           // 4px spacing below label
+  display: 'block'
+}
+
+// Input Field Adjustments (when using external labels)
+inputField: {
+  // Remove internal label prop
+  // Add meaningful placeholder
+  placeholder: 'Enter field value',
+  size: 'small',
+  sx: {
+    '& .MuiInputBase-root': { fontSize: '0.875rem' },
+    '& .MuiInputBase-input': { py: 0.75 }  // Consistent padding
+  }
+}
+
+// External Error Message
+errorMessage: {
+  fontSize: '0.75rem',
+  marginTop: '0.5',              // 4px spacing above error
+  display: 'block',
+  color: 'error'
+}
+```
+
+#### Select Field with External Label
+```tsx
+<Grid item xs={12} md={6}>
+  <Typography variant="caption" sx={{ 
+    color: theme.palette.text.secondary,
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    mb: 0.5,
+    display: 'block'
+  }}>
+    Select Field Name
+  </Typography>
+  <Controller
+    name="selectField"
+    control={control}
+    render={({ field }) => (
+      <FormControl fullWidth size="small" error={!!errors.selectField}>
+        <Select 
+          {...field} 
+          displayEmpty
+          sx={{
+            fontSize: '0.875rem',
+            '& .MuiSelect-select': { fontSize: '0.875rem', py: 0.75 }
+          }}
+        >
+          <MenuItem value="" disabled sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+            Select option
+          </MenuItem>
+          <MenuItem value="option1" sx={{ fontSize: '0.875rem' }}>Option 1</MenuItem>
+          <MenuItem value="option2" sx={{ fontSize: '0.875rem' }}>Option 2</MenuItem>
+        </Select>
+      </FormControl>
+    )}
+  />
+  {errors.selectField && (
+    <Typography variant="caption" color="error" sx={{ 
+      fontSize: '0.75rem', 
+      mt: 0.5, 
+      display: 'block' 
+    }}>
+      {errors.selectField.message}
+    </Typography>
+  )}
+</Grid>
+```
+
+#### Dialog Actions (Compact Pattern)
+```tsx
+<DialogActions sx={{ 
+  px: 2, 
+  py: 1.5, 
+  borderTop: '1px solid', 
+  borderColor: 'divider',
+  gap: 1
+}}>
+  <Button 
+    onClick={handleClose}
+    size="small"
+    sx={{
+      textTransform: 'none',
+      fontSize: '0.875rem',
+      py: 0.5,
+      px: 1.5
+    }}
+  >
+    Cancel
+  </Button>
+  <Button
+    type="submit"
+    variant="contained"
+    size="small"
+    sx={{
+      textTransform: 'none',
+      fontSize: '0.875rem',
+      py: 0.5,
+      px: 1.5,
+      backgroundColor: theme.palette.primary.main,
+      '&:hover': {
+        backgroundColor: theme.palette.primary.dark,
+      },
+    }}
+  >
+    Save
+  </Button>
+</DialogActions>
+```
+
+#### Key Benefits of External Field Labels
+- **Cleaner Visual Hierarchy**: Labels are clearly separated from input fields
+- **Better Readability**: Uppercase, letter-spaced labels are easier to scan
+- **Consistent Spacing**: Uniform spacing between label, field, and error message
+- **Professional Appearance**: More polished look compared to floating labels
+- **Better Accessibility**: Screen readers can better identify field relationships
+- **Compact Design**: Reduces visual clutter while maintaining functionality
+
+#### When to Use External Labels
+- ✅ **All Modal/Dialog Forms**: Create, Edit, View dialogs
+- ✅ **Complex Forms**: Multi-step forms, detailed input forms
+- ✅ **Professional Interfaces**: Admin panels, management interfaces
+- ✅ **Dense Information**: When screen space is at a premium
+
+#### Migration from Internal Labels
+```typescript
+// OLD PATTERN (Internal Labels)
+<TextField
+  label="Field Name"           // ❌ Remove this
+  helperText={error?.message}  // ❌ Remove this
+  {...field}
+/>
+
+// NEW PATTERN (External Labels)
+<Typography variant="caption" sx={fieldLabelStyle}>
+  Field Name
+</Typography>
+<TextField
+  placeholder="Enter field value"  // ✅ Add meaningful placeholder
+  {...field}
+/>
+{error && (
+  <Typography variant="caption" color="error" sx={errorMessageStyle}>
+    {error.message}
+  </Typography>
+)}
+```
+
 ---
 
 ## Typography Scale
@@ -1260,6 +1531,17 @@ When applying this design to other modules:
 - [ ] Update pagination font sizes to 0.75rem
 - [ ] Change pagination options to [10, 25, 50, 100]
 
+### Modal & Dialog Patterns (NEW)
+- [ ] Convert all modal forms to use external field labels
+- [ ] Remove `label` prop from TextField and Select components
+- [ ] Add external Typography labels with proper styling (0.75rem, uppercase, letter-spaced)
+- [ ] Add meaningful placeholders to all input fields
+- [ ] Move error messages outside as separate Typography elements
+- [ ] Apply compact dialog header pattern with icon container
+- [ ] Use proper dialog actions styling with consistent button sizes
+- [ ] Ensure dialog content padding is `py: 1.5`
+- [ ] Apply theme-based colors to dialog headers and borders
+
 ### Colors & Effects
 - [ ] Apply theme-based color scheme consistently
 - [ ] Add table row hover effect: `rgba(25, 118, 210, 0.04)`
@@ -1281,6 +1563,7 @@ When applying this design to other modules:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | December 2024 | Added Modal and Dialog patterns with external field labels, compact dialog headers, and comprehensive form styling guidelines |
 | 1.1 | November 2024 | Added comprehensive theme implementation guide, color decision tree, and proper theme.palette usage patterns |
 | 1.0 | November 2024 | Initial design guide created from Commercial module implementation |
 
@@ -1295,6 +1578,9 @@ When applying this design to other modules:
   - `src/components/QuantityTakeOff/BOQ/EnterpriseBOQDrafts.tsx`
   - `src/components/QuantityTakeOff/quotation/EnterpriseQuotationDrafts.tsx`
   - `src/components/QuantityTakeOff/purchase-order/EnterprisePurchaseOrderDrafts.tsx`
+- Modal Pattern Implementation Files:
+  - `frontend/src/pages/Admin/BranchManagement.tsx` (External field labels pattern)
+  - `frontend/src/pages/Manufacturing/BOMManagement.tsx` (Reference implementation)
 
 ---
 

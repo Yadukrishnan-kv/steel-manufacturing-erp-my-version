@@ -289,7 +289,7 @@ export const api = createApi({
       }),
     }),
     
-    getBranches: builder.query<any[], void>({
+    getManufacturingBranches: builder.query<any[], void>({
       query: () => '/manufacturing/branches',
       transformResponse: (response: any) => response.data || [],
       providesTags: ['Branch'],
@@ -703,6 +703,51 @@ export const api = createApi({
       }),
       invalidatesTags: ['User'],
     }),
+    
+    // Branch Management endpoints
+    getBranches: builder.query<any, { page?: number; limit?: number; search?: string; state?: string; isActive?: boolean }>({
+      query: (params = {}) => ({
+        url: '/admin/branches',
+        params,
+      }),
+      transformResponse: (response: any) => ({
+        data: response.data || [],
+        pagination: response.pagination || { total: 0, totalPages: 0 }
+      }),
+      providesTags: ['Branch'],
+    }),
+    
+    getBranch: builder.query<any, string>({
+      query: (id) => `/admin/branches/${id}`,
+      transformResponse: (response: any) => response.data,
+      providesTags: ['Branch'],
+    }),
+    
+    createBranch: builder.mutation<any, any>({
+      query: (branchData) => ({
+        url: '/admin/branches',
+        method: 'POST',
+        body: branchData,
+      }),
+      invalidatesTags: ['Branch'],
+    }),
+    
+    updateBranch: builder.mutation<any, { id: string; branchData: any }>({
+      query: ({ id, branchData }) => ({
+        url: `/admin/branches/${id}`,
+        method: 'PUT',
+        body: branchData,
+      }),
+      invalidatesTags: ['Branch'],
+    }),
+    
+    deleteBranch: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/admin/branches/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Branch'],
+    }),
   }),
 });
 
@@ -735,7 +780,7 @@ export const {
   useRecordScrapMutation,
   useCreateEngineeringChangeMutation,
   useCalculateDeliveryDateMutation,
-  useGetBranchesQuery,
+  useGetManufacturingBranchesQuery,
   
   // Sales Order hooks
   useGetSalesOrdersQuery,
@@ -802,4 +847,11 @@ export const {
   useGetPermissionsQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
+  
+  // Branch Management hooks
+  useGetBranchesQuery,
+  useGetBranchQuery,
+  useCreateBranchMutation,
+  useUpdateBranchMutation,
+  useDeleteBranchMutation,
 } = api;

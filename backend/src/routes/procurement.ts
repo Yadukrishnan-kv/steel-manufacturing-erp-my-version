@@ -105,6 +105,58 @@ const interBranchTransferSchema = z.object({
 });
 
 // Purchase Requisition APIs
+
+/**
+ * @swagger
+ * /procurement/requisitions:
+ *   post:
+ *     summary: Create purchase requisition
+ *     description: Create a new purchase requisition for materials
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [requestedBy, department, requiredDate, items]
+ *             properties:
+ *               requestedBy:
+ *                 type: string
+ *               department:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, URGENT]
+ *               requiredDate:
+ *                 type: string
+ *                 format: date-time
+ *               remarks:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     estimatedCost:
+ *                       type: number
+ *                     justification:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Purchase requisition created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/requisitions', authenticate, validate({ body: createPRSchema }), async (req: Request, res: Response) => {
   try {
     const prData = {
@@ -156,6 +208,50 @@ router.post('/requisitions/auto-generate', authenticate, validate({ body: autoGe
   }
 });
 
+/**
+ * @swagger
+ * /procurement/requisitions:
+ *   get:
+ *     summary: Get purchase requisitions
+ *     description: Get all purchase requisitions with filtering
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: department
+ *         schema:
+ *           type: string
+ *         description: Filter by department
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [LOW, MEDIUM, HIGH, URGENT]
+ *         description: Filter by priority
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: List of purchase requisitions
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/requisitions', authenticate, async (req: Request, res: Response) => {
   try {
     const filters: any = {};
@@ -249,6 +345,56 @@ router.put('/requisitions/:prId/reject', authenticate, async (req: Request, res:
 });
 
 // RFQ Management APIs
+
+/**
+ * @swagger
+ * /procurement/rfq:
+ *   post:
+ *     summary: Create RFQ
+ *     description: Create Request for Quotation and send to suppliers
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, dueDate, items, supplierIds]
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     specifications:
+ *                       type: string
+ *               supplierIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *     responses:
+ *       201:
+ *         description: RFQ created and sent to suppliers
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/rfq', authenticate, validate({ body: createRFQSchema }), async (req: Request, res: Response) => {
   try {
     const rfqData = {
@@ -388,6 +534,52 @@ router.get('/rfq', authenticate, async (req: Request, res: Response) => {
 });
 
 // Supplier Evaluation APIs
+
+/**
+ * @swagger
+ * /procurement/suppliers/evaluate:
+ *   post:
+ *     summary: Evaluate supplier
+ *     description: Submit supplier performance evaluation
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [supplierId, deliveryRating, qualityRating, pricingRating, evaluationPeriod]
+ *             properties:
+ *               supplierId:
+ *                 type: string
+ *                 format: uuid
+ *               deliveryRating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *               qualityRating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *               pricingRating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *               evaluationPeriod:
+ *                 type: string
+ *                 pattern: '^\d{4}-\d{2}$'
+ *               comments:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Supplier evaluation completed
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/suppliers/evaluate', authenticate, validate({ body: supplierEvaluationSchema }), async (req: Request, res: Response) => {
   try {
     const evaluation = await procurementService.evaluateSupplier(req.body);
@@ -441,6 +633,57 @@ router.get('/suppliers/:supplierId/performance', authenticate, async (req: Reque
 });
 
 // Purchase Order Management APIs
+
+/**
+ * @swagger
+ * /procurement/orders:
+ *   post:
+ *     summary: Create purchase order
+ *     description: Create a new purchase order for a supplier
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [supplierId, deliveryDate, items]
+ *             properties:
+ *               supplierId:
+ *                 type: string
+ *                 format: uuid
+ *               prId:
+ *                 type: string
+ *                 format: uuid
+ *               deliveryDate:
+ *                 type: string
+ *                 format: date-time
+ *               terms:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     unitPrice:
+ *                       type: number
+ *                     totalPrice:
+ *                       type: number
+ *     responses:
+ *       201:
+ *         description: Purchase order created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/orders', authenticate, validate({ body: createPOSchema }), async (req: Request, res: Response) => {
   try {
     const poData = {
@@ -530,6 +773,45 @@ router.put('/orders/:poId/send', authenticate, async (req: Request, res: Respons
   }
 });
 
+/**
+ * @swagger
+ * /procurement/orders:
+ *   get:
+ *     summary: Get purchase orders
+ *     description: Get all purchase orders with filtering
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: supplierId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by supplier
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: List of purchase orders
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/orders', authenticate, async (req: Request, res: Response) => {
   try {
     const filters: any = {};
@@ -587,6 +869,21 @@ router.get('/orders/:poId/status', authenticate, async (req: Request, res: Respo
   }
 });
 
+/**
+ * @swagger
+ * /procurement/orders/overdue:
+ *   get:
+ *     summary: Get overdue purchase orders
+ *     description: Get all overdue purchase orders
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of overdue purchase orders
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/orders/overdue', authenticate, async (req: Request, res: Response) => {
   try {
     const overduePOs = await procurementService.getOverduePurchaseOrders();
@@ -607,6 +904,58 @@ router.get('/orders/overdue', authenticate, async (req: Request, res: Response) 
 });
 
 // GRN Processing APIs
+
+/**
+ * @swagger
+ * /procurement/grn:
+ *   post:
+ *     summary: Create GRN
+ *     description: Create Goods Receipt Note for received materials
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [poId, items]
+ *             properties:
+ *               poId:
+ *                 type: string
+ *                 format: uuid
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     poItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     receivedQty:
+ *                       type: number
+ *                     acceptedQty:
+ *                       type: number
+ *                     rejectedQty:
+ *                       type: number
+ *                     batchNumber:
+ *                       type: string
+ *                     expiryDate:
+ *                       type: string
+ *                       format: date-time
+ *                     remarks:
+ *                       type: string
+ *               qcRemarks:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: GRN created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/grn', authenticate, validate({ body: createGRNSchema }), async (req: Request, res: Response) => {
   try {
     const grnData = {
@@ -737,6 +1086,29 @@ router.post('/inter-branch-transfer', authenticate, validate({ body: interBranch
 });
 
 // Dashboard and Reporting APIs
+
+/**
+ * @swagger
+ * /procurement/dashboard:
+ *   get:
+ *     summary: Get procurement dashboard
+ *     description: Get procurement dashboard with KPIs and metrics
+ *     tags: [Procurement]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Procurement dashboard data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/dashboard', authenticate, async (req: Request, res: Response) => {
   try {
     const branchId = req.query.branchId as string;

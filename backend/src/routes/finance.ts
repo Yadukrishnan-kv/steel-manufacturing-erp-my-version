@@ -75,9 +75,26 @@ const bankReconciliationSchema = z.object({
 });
 
 /**
- * @route GET /api/v1/finance/accounts-receivable
- * @desc Get accounts receivable management data
- * @access Private
+ * @swagger
+ * /finance/accounts-receivable:
+ *   get:
+ *     summary: Get accounts receivable
+ *     description: Get accounts receivable management data
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Accounts receivable data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/accounts-receivable', authenticate, async (req: Request, res: Response) => {
   try {
@@ -105,9 +122,26 @@ router.get('/accounts-receivable', authenticate, async (req: Request, res: Respo
 });
 
 /**
- * @route GET /api/v1/finance/accounts-payable
- * @desc Get accounts payable management data
- * @access Private
+ * @swagger
+ * /finance/accounts-payable:
+ *   get:
+ *     summary: Get accounts payable
+ *     description: Get accounts payable management data
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Accounts payable data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/accounts-payable', authenticate, async (req: Request, res: Response) => {
   try {
@@ -134,9 +168,44 @@ router.get('/accounts-payable', authenticate, async (req: Request, res: Response
   }
 });
 /**
- * @route POST /api/v1/finance/calculate-tax
- * @desc Calculate GST, TDS, and statutory tax calculations
- * @access Private
+ * @swagger
+ * /finance/calculate-tax:
+ *   post:
+ *     summary: Calculate tax
+ *     description: Calculate GST, TDS, and statutory tax calculations
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [amount]
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               taxType:
+ *                 type: string
+ *                 enum: [GST, TDS, PROFESSIONAL_TAX, CESS]
+ *               gstRate:
+ *                 type: number
+ *               tdsRate:
+ *                 type: number
+ *               isInterState:
+ *                 type: boolean
+ *               customerGstNumber:
+ *                 type: string
+ *               supplierGstNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tax calculation result
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/calculate-tax', 
   authenticate, 
@@ -163,9 +232,40 @@ router.post('/calculate-tax',
 );
 
 /**
- * @route POST /api/v1/finance/profit-loss
- * @desc Generate branch-wise and consolidated P&L reporting
- * @access Private
+ * @swagger
+ * /finance/profit-loss:
+ *   post:
+ *     summary: Generate P&L statement
+ *     description: Generate branch-wise and consolidated P&L reporting
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [startDate, endDate]
+ *             properties:
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *               includeConsolidated:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: P&L statement generated
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/profit-loss',
   authenticate,
@@ -258,9 +358,38 @@ router.get('/manufacturing-cost-analysis', authenticate, async (req: Request, re
 });
 
 /**
- * @route GET /api/v1/finance/dashboard
- * @desc Build financial dashboard and KPI tracking
- * @access Private
+ * @swagger
+ * /finance/dashboard:
+ *   get:
+ *     summary: Get financial dashboard
+ *     description: Get financial dashboard and KPI tracking
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: Financial dashboard data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboard', authenticate, async (req: Request, res: Response) => {
   try {
@@ -286,9 +415,52 @@ router.get('/dashboard', authenticate, async (req: Request, res: Response) => {
   }
 });
 /**
- * @route POST /api/v1/finance/invoices
- * @desc Create automated invoice generation
- * @access Private
+ * @swagger
+ * /finance/invoices:
+ *   post:
+ *     summary: Create invoice
+ *     description: Create automated invoice generation
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerId, referenceType, referenceId, invoiceDate, dueDate, lineItems]
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               referenceType:
+ *                 type: string
+ *                 enum: [SALES_ORDER, SERVICE_REQUEST]
+ *               referenceId:
+ *                 type: string
+ *                 format: uuid
+ *               invoiceDate:
+ *                 type: string
+ *                 format: date-time
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *               lineItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               discountAmount:
+ *                 type: number
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Invoice created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/invoices',
   authenticate,
@@ -318,9 +490,44 @@ router.post('/invoices',
 );
 
 /**
- * @route POST /api/v1/finance/payments
- * @desc Process payment and reconciliation
- * @access Private
+ * @swagger
+ * /finance/payments:
+ *   post:
+ *     summary: Process payment
+ *     description: Process payment and reconciliation
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [invoiceId, amount, paymentDate, paymentMethod]
+ *             properties:
+ *               invoiceId:
+ *                 type: string
+ *                 format: uuid
+ *               amount:
+ *                 type: number
+ *               paymentDate:
+ *                 type: string
+ *                 format: date-time
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [CASH, CHEQUE, BANK_TRANSFER, UPI, CARD]
+ *               referenceNumber:
+ *                 type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Payment processed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/payments',
   authenticate,

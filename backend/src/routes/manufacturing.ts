@@ -97,9 +97,39 @@ const scrapRecordSchema = z.object({
 // Production Order Management Routes
 
 /**
- * POST /api/manufacturing/production-orders
- * Create production order with material validation
- * Validates: Requirements 1.1 - Automatic production order generation
+ * @swagger
+ * /manufacturing/production-orders:
+ *   post:
+ *     summary: Create a new production order
+ *     description: Creates a production order with material validation and scheduling
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProductionOrder'
+ *     responses:
+ *       201:
+ *         description: Production order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/ProductionOrder'
+ *                 message:
+ *                   type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/production-orders', 
   authenticate,
@@ -127,8 +157,69 @@ router.post('/production-orders',
 );
 
 /**
- * GET /api/manufacturing/production-orders
- * Get all production orders with filtering and pagination
+ * @swagger
+ * /manufacturing/production-orders:
+ *   get:
+ *     summary: Get all production orders
+ *     description: Retrieve production orders with filtering and pagination
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [DRAFT, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED]
+ *         description: Filter by status
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by start date (from)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by end date (to)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of production orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProductionOrder'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/production-orders',
   authenticate,
@@ -220,8 +311,38 @@ router.get('/production-orders',
 );
 
 /**
- * GET /api/manufacturing/production-orders/:id
- * Get production order with operations and BOM details
+ * @swagger
+ * /manufacturing/production-orders/{id}:
+ *   get:
+ *     summary: Get production order by ID
+ *     description: Get production order with operations and BOM details
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Production order ID
+ *     responses:
+ *       200:
+ *         description: Production order details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/ProductionOrder'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/production-orders/:id',
   authenticate,
@@ -259,9 +380,38 @@ router.get('/production-orders/:id',
 );
 
 /**
- * GET /api/manufacturing/schedule
- * Get Gantt chart and calendar visualization data
- * Validates: Requirements 1.2 - Gantt chart and calendar visualization
+ * @swagger
+ * /manufacturing/schedule:
+ *   get:
+ *     summary: Get production schedule
+ *     description: Get Gantt chart and calendar visualization data for production scheduling
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for schedule
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for schedule
+ *     responses:
+ *       200:
+ *         description: Production schedule data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/schedule',
   authenticate,
@@ -293,9 +443,46 @@ router.get('/schedule',
 );
 
 /**
- * PUT /api/manufacturing/production-orders/:id/status
- * Update production order status with real-time tracking
- * Validates: Requirements 1.2 - Production order status tracking
+ * @swagger
+ * /manufacturing/production-orders/{id}/status:
+ *   put:
+ *     summary: Update production order status
+ *     description: Update production order status with real-time tracking
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Production order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [DRAFT, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED]
+ *               actualStartDate:
+ *                 type: string
+ *                 format: date-time
+ *               actualEndDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/production-orders/:id/status',
   authenticate,
@@ -342,9 +529,62 @@ router.put('/production-orders/:id/status',
 // BOM Management Routes
 
 /**
- * POST /api/manufacturing/bom
- * Create multi-level BOM with revision control
- * Validates: Requirements 1.5 - Multi-level BOM management
+ * @swagger
+ * /manufacturing/bom:
+ *   post:
+ *     summary: Create BOM
+ *     description: Create multi-level Bill of Materials with revision control
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, revision, effectiveDate, items]
+ *             properties:
+ *               productId:
+ *                 type: string
+ *                 format: uuid
+ *               revision:
+ *                 type: string
+ *               effectiveDate:
+ *                 type: string
+ *                 format: date-time
+ *               engineeringChangeNumber:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     unit:
+ *                       type: string
+ *                     scrapPercentage:
+ *                       type: number
+ *     responses:
+ *       201:
+ *         description: BOM created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/BOM'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/bom',
   authenticate,
@@ -375,9 +615,55 @@ router.post('/bom',
 );
 
 /**
- * PUT /api/manufacturing/bom/engineering-change
- * Update BOM with engineering change management
- * Validates: Requirements 1.5 - Engineering change management
+ * @swagger
+ * /manufacturing/bom/engineering-change:
+ *   put:
+ *     summary: Update BOM with engineering change
+ *     description: Update BOM with engineering change management and revision control
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bomId, engineeringChangeNumber, newRevision, effectiveDate, changeReason, items]
+ *             properties:
+ *               bomId:
+ *                 type: string
+ *                 format: uuid
+ *               engineeringChangeNumber:
+ *                 type: string
+ *               newRevision:
+ *                 type: string
+ *               effectiveDate:
+ *                 type: string
+ *                 format: date-time
+ *               changeReason:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     unit:
+ *                       type: string
+ *                     scrapPercentage:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: BOM updated with engineering change successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/bom/engineering-change',
   authenticate,
@@ -408,8 +694,44 @@ router.put('/bom/engineering-change',
 );
 
 /**
- * GET /api/manufacturing/branches
- * Get all active branches
+ * @swagger
+ * /manufacturing/branches:
+ *   get:
+ *     summary: Get all active branches
+ *     description: Retrieve all active branches for manufacturing operations
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active branches
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       code:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       state:
+ *                         type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
  */
 router.get('/branches',
   authenticate,
@@ -449,8 +771,58 @@ router.get('/branches',
 );
 
 /**
- * GET /api/manufacturing/boms
- * Get all BOMs with basic information
+ * @swagger
+ * /manufacturing/boms:
+ *   get:
+ *     summary: Get all BOMs
+ *     description: Retrieve all Bills of Materials with basic information
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [DRAFT, APPROVED, OBSOLETE]
+ *           default: APPROVED
+ *         description: Filter by BOM status
+ *     responses:
+ *       200:
+ *         description: List of BOMs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       revision:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       effectiveDate:
+ *                         type: string
+ *                         format: date-time
+ *                       product:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           code:
+ *                             type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
  */
 router.get('/boms',
   authenticate,
@@ -497,8 +869,38 @@ router.get('/boms',
 );
 
 /**
- * GET /api/manufacturing/bom/:id
- * Get BOM with hierarchical structure
+ * @swagger
+ * /manufacturing/bom/{id}:
+ *   get:
+ *     summary: Get BOM by ID
+ *     description: Get BOM with hierarchical structure and all items
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: BOM ID
+ *     responses:
+ *       200:
+ *         description: BOM details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/BOM'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/bom/:id',
   authenticate,
@@ -536,8 +938,42 @@ router.get('/bom/:id',
 );
 
 /**
- * POST /api/manufacturing/bom/:id/approve
- * Approve BOM and make it active
+ * @swagger
+ * /manufacturing/bom/{id}/approve:
+ *   post:
+ *     summary: Approve BOM
+ *     description: Approve a BOM and make it active for production use
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: BOM ID to approve
+ *     responses:
+ *       200:
+ *         description: BOM approved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/BOM'
+ *                 message:
+ *                   type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.post('/bom/:id/approve',
   authenticate,
@@ -576,8 +1012,59 @@ router.post('/bom/:id/approve',
 );
 
 /**
- * GET /api/manufacturing/bom/:id/cost
- * Calculate BOM cost rollup
+ * @swagger
+ * /manufacturing/bom/{id}/cost:
+ *   get:
+ *     summary: Calculate BOM cost
+ *     description: Calculate BOM cost rollup with material and labor costs
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: BOM ID
+ *       - in: query
+ *         name: quantity
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Quantity for cost calculation
+ *     responses:
+ *       200:
+ *         description: BOM cost analysis
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalMaterialCost:
+ *                       type: number
+ *                     totalLaborCost:
+ *                       type: number
+ *                     totalOverheadCost:
+ *                       type: number
+ *                     totalCost:
+ *                       type: number
+ *                     costBreakdown:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/bom/:id/cost',
   authenticate,
@@ -622,9 +1109,47 @@ router.get('/bom/:id/cost',
 // Work Center Management Routes
 
 /**
- * POST /api/manufacturing/work-centers
- * Create work center for capacity management
- * Validates: Requirements 1.3 - Work center management
+ * @swagger
+ * /manufacturing/work-centers:
+ *   post:
+ *     summary: Create work center
+ *     description: Create work center for capacity management and scheduling
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [code, name, type, capacity]
+ *             properties:
+ *               code:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [CUTTING, CNC, BENDING, WELDING, COATING, ASSEMBLY]
+ *               capacity:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Work center created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/WorkCenter'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/work-centers',
   authenticate,
@@ -652,9 +1177,59 @@ router.post('/work-centers',
 );
 
 /**
- * POST /api/manufacturing/operations
- * Create operation for work center
- * Validates: Requirements 1.3 - Operation management
+ * @swagger
+ * /manufacturing/operations:
+ *   post:
+ *     summary: Create operation
+ *     description: Create a new operation for work center routing
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [code, name, workCenterId, setupTime, runTime, sequence]
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Operation code
+ *               name:
+ *                 type: string
+ *                 description: Operation name
+ *               workCenterId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Associated work center ID
+ *               setupTime:
+ *                 type: number
+ *                 description: Setup time in minutes
+ *               runTime:
+ *                 type: number
+ *                 description: Run time per unit in minutes
+ *               sequence:
+ *                 type: integer
+ *                 description: Operation sequence number
+ *     responses:
+ *       201:
+ *         description: Operation created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                 message:
+ *                   type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/operations',
   authenticate,
@@ -682,9 +1257,71 @@ router.post('/operations',
 );
 
 /**
- * POST /api/manufacturing/capacity-routing
- * Calculate capacity-based routing for operations
- * Validates: Requirements 1.3 - Capacity constraint validation
+ * @swagger
+ * /manufacturing/capacity-routing:
+ *   post:
+ *     summary: Calculate capacity routing
+ *     description: Calculate capacity-based routing for operations with constraint validation
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bomItems, quantity]
+ *             properties:
+ *               bomItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     operation:
+ *                       type: string
+ *               quantity:
+ *                 type: number
+ *                 description: Production quantity
+ *               bufferDays:
+ *                 type: number
+ *                 description: Buffer days for scheduling
+ *     responses:
+ *       200:
+ *         description: Capacity routing calculated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       operationId:
+ *                         type: string
+ *                       workCenterId:
+ *                         type: string
+ *                       scheduledStart:
+ *                         type: string
+ *                         format: date-time
+ *                       scheduledEnd:
+ *                         type: string
+ *                         format: date-time
+ *                       duration:
+ *                         type: number
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/capacity-routing',
   authenticate,
@@ -716,9 +1353,61 @@ router.post('/capacity-routing',
 );
 
 /**
- * GET /api/manufacturing/machine-schedule
- * Get machine schedule for Gantt chart visualization
- * Validates: Requirements 1.2 - Gantt chart and calendar visualization
+ * @swagger
+ * /manufacturing/machine-schedule:
+ *   get:
+ *     summary: Get machine schedule
+ *     description: Get machine schedule for Gantt chart visualization
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Schedule start date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Schedule end date
+ *       - in: query
+ *         name: workCenterIds
+ *         schema:
+ *           type: string
+ *         description: Comma-separated work center IDs to filter
+ *     responses:
+ *       200:
+ *         description: Machine schedule data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       workCenterId:
+ *                         type: string
+ *                       workCenterName:
+ *                         type: string
+ *                       schedules:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
  */
 router.get('/machine-schedule',
   authenticate,
@@ -752,9 +1441,41 @@ router.get('/machine-schedule',
 // Material Consumption and Scrap Tracking Routes
 
 /**
- * POST /api/manufacturing/material-consumption
- * Record material consumption with variance analysis
- * Validates: Requirements 13.5 - Material consumption tracking
+ * @swagger
+ * /manufacturing/material-consumption:
+ *   post:
+ *     summary: Record material consumption
+ *     description: Record material consumption with variance analysis for production orders
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productionOrderId, inventoryItemId, plannedQuantity, actualQuantity, variance]
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               plannedQuantity:
+ *                 type: number
+ *               actualQuantity:
+ *                 type: number
+ *               variance:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Material consumption recorded successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/material-consumption',
   authenticate,
@@ -781,9 +1502,44 @@ router.post('/material-consumption',
 );
 
 /**
- * POST /api/manufacturing/scrap-tracking
- * Record scrap by operation with costing integration
- * Validates: Requirements 13.1 - Scrap tracking by operation
+ * @swagger
+ * /manufacturing/scrap-tracking:
+ *   post:
+ *     summary: Record scrap
+ *     description: Record scrap by operation with costing integration
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productionOrderId, inventoryItemId, quantity, reason]
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               operationId:
+ *                 type: string
+ *                 format: uuid
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               quantity:
+ *                 type: number
+ *               reason:
+ *                 type: string
+ *               cost:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Scrap recorded successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/scrap-tracking',
   authenticate,
@@ -810,8 +1566,30 @@ router.post('/scrap-tracking',
 );
 
 /**
- * GET /api/manufacturing/work-centers
- * Get all work centers with utilization
+ * @swagger
+ * /manufacturing/work-centers:
+ *   get:
+ *     summary: Get all work centers
+ *     description: Get all work centers with current utilization data
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of work centers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/WorkCenter'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/work-centers',
   authenticate,
@@ -837,8 +1615,60 @@ router.get('/work-centers',
 );
 
 /**
- * GET /api/manufacturing/utilization
- * Get work center utilization report
+ * @swagger
+ * /manufacturing/utilization:
+ *   get:
+ *     summary: Get work center utilization
+ *     description: Get work center utilization report for capacity planning
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Report start date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Report end date
+ *       - in: query
+ *         name: workCenterId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by specific work center
+ *     responses:
+ *       200:
+ *         description: Work center utilization data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     utilizationPercentage:
+ *                       type: number
+ *                     totalCapacity:
+ *                       type: number
+ *                     usedCapacity:
+ *                       type: number
+ *                     availableCapacity:
+ *                       type: number
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
  */
 router.get('/utilization',
   authenticate,
@@ -870,9 +1700,38 @@ router.get('/utilization',
 );
 
 /**
- * GET /api/manufacturing/gantt-chart
- * Get enhanced Gantt chart data for production visualization
- * Validates: Requirements 1.2 - Gantt chart and calendar visualization
+ * @swagger
+ * /manufacturing/gantt-chart:
+ *   get:
+ *     summary: Get Gantt chart data
+ *     description: Get enhanced Gantt chart data for production visualization
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: Gantt chart data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/gantt-chart',
   authenticate,
@@ -904,9 +1763,42 @@ router.get('/gantt-chart',
 );
 
 /**
- * GET /api/manufacturing/calendar-view
- * Get calendar view data for production scheduling
- * Validates: Requirements 1.2 - Calendar visualization
+ * @swagger
+ * /manufacturing/calendar-view:
+ *   get:
+ *     summary: Get calendar view data
+ *     description: Get calendar view data for production scheduling
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Calendar view data
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/calendar-view',
   authenticate,
@@ -949,9 +1841,70 @@ router.get('/calendar-view',
 );
 
 /**
- * POST /api/manufacturing/engineering-change
- * Create engineering change request with approval workflow
- * Validates: Requirements 1.5 - Engineering change management workflows
+ * @swagger
+ * /manufacturing/engineering-change:
+ *   post:
+ *     summary: Create engineering change request
+ *     description: Create engineering change request with approval workflow
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bomId, changeNumber, changeReason, effectiveDate]
+ *             properties:
+ *               bomId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: BOM ID to change
+ *               changeNumber:
+ *                 type: string
+ *                 description: Engineering change number
+ *               changeReason:
+ *                 type: string
+ *                 description: Reason for the change
+ *               effectiveDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: When the change becomes effective
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *                 default: MEDIUM
+ *               description:
+ *                 type: string
+ *                 description: Detailed description of the change
+ *               impactAnalysis:
+ *                 type: string
+ *                 description: Impact analysis of the change
+ *               approvalRequired:
+ *                 type: boolean
+ *                 default: true
+ *     responses:
+ *       201:
+ *         description: Engineering change request created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     changeRequestId:
+ *                       type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/engineering-change',
   authenticate,
@@ -1010,9 +1963,65 @@ router.post('/engineering-change',
 );
 
 /**
- * POST /api/manufacturing/delivery-date-calculation
- * Calculate enhanced delivery date with buffer days and lead time management
- * Validates: Requirements 1.4 - Buffer day calculations and lead time management
+ * @swagger
+ * /manufacturing/delivery-date-calculation:
+ *   post:
+ *     summary: Calculate delivery date
+ *     description: Calculate enhanced delivery date with buffer days and lead time management
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bomId, quantity]
+ *             properties:
+ *               bomId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: BOM ID for the product
+ *               quantity:
+ *                 type: number
+ *                 description: Production quantity
+ *               requestedDeliveryDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Customer requested delivery date
+ *               customBufferDays:
+ *                 type: number
+ *                 description: Custom buffer days to add
+ *     responses:
+ *       200:
+ *         description: Delivery date calculation result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     estimatedDeliveryDate:
+ *                       type: string
+ *                       format: date-time
+ *                     productionStartDate:
+ *                       type: string
+ *                       format: date-time
+ *                     totalLeadTime:
+ *                       type: number
+ *                     bufferDays:
+ *                       type: number
+ *                     canMeetRequestedDate:
+ *                       type: boolean
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/delivery-date-calculation',
   authenticate,
@@ -1056,9 +2065,72 @@ router.post('/delivery-date-calculation',
 );
 
 /**
- * PUT /api/manufacturing/production-orders/:id/reschedule
- * Reschedule production order with updated capacity routing
- * Validates: Requirements 1.3 - Capacity-based routing calculations
+ * @swagger
+ * /manufacturing/production-orders/{id}/reschedule:
+ *   put:
+ *     summary: Reschedule production order
+ *     description: Reschedule production order with updated capacity routing
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Production order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newStartDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: New scheduled start date
+ *               bufferDays:
+ *                 type: number
+ *                 description: Buffer days for scheduling
+ *               priority:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 10
+ *                 description: Production priority
+ *     responses:
+ *       200:
+ *         description: Production order rescheduled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     newScheduledStart:
+ *                       type: string
+ *                       format: date-time
+ *                     newScheduledEnd:
+ *                       type: string
+ *                       format: date-time
+ *                     capacityRouting:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.put('/production-orders/:id/reschedule',
   authenticate,

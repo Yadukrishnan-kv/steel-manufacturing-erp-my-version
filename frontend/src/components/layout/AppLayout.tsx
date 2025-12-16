@@ -271,8 +271,9 @@ const navigationItems: NavigationItem[] = [
     label: 'Administration',
     icon: <AdminPanelSettings />,
     children: [
+      { id: 'branches', label: 'Branch Management', path: '/admin/branches' },
       { id: 'users', label: 'User Management', path: '/admin/users' },
-      { id: 'roles', label: 'Roles & Permissions', path: '/admin/users' },
+      { id: 'roles', label: 'Roles & Permissions', path: '/admin/roles' },
     ],
   },
 ];

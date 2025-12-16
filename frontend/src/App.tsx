@@ -931,10 +931,21 @@ const App: React.FC = () => {
         } />
         
         {/* Admin routes */}
+        <Route path="admin/branches" element={
+          <React.Suspense fallback={<CircularProgress />}>
+            {React.createElement(React.lazy(() => import('./pages/Admin/BranchManagement')))}
+          </React.Suspense>
+        } />
         <Route path="admin/users" element={
           <React.Suspense fallback={<CircularProgress />}>
             {React.createElement(React.lazy(() => import('./pages/Admin/UserManagement')))}
           </React.Suspense>
+        } />
+        <Route path="admin/roles" element={
+          <Box sx={{ p: 2 }}>
+            <h2>Roles & Permissions</h2>
+            <p>Role and permission management will be implemented.</p>
+          </Box>
         } />
         
         {/* Settings and profile routes */}

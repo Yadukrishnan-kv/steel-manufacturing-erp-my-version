@@ -6,8 +6,52 @@ import { logger } from '../utils/logger';
 const router = Router();
 
 /**
- * Customer Registration
- * POST /api/v1/customer-portal/register
+ * @swagger
+ * /customer-portal/register:
+ *   post:
+ *     summary: Customer registration
+ *     tags: [Customer Portal]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - phone
+ *               - password
+ *               - address
+ *               - city
+ *               - state
+ *               - pincode
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               pincode:
+ *                 type: string
+ *               gstNumber:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Customer registered successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -56,8 +100,35 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 /**
- * Customer Login
- * POST /api/v1/customer-portal/login
+ * @swagger
+ * /customer-portal/login:
+ *   post:
+ *     summary: Customer login
+ *     tags: [Customer Portal]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
@@ -89,8 +160,23 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 /**
- * Get Customer Orders
- * GET /api/v1/customer-portal/orders
+ * @swagger
+ * /customer-portal/orders:
+ *   get:
+ *     summary: Get customer orders
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Orders retrieved successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.get('/orders', async (req: Request, res: Response) => {
   try {
@@ -117,8 +203,29 @@ router.get('/orders', async (req: Request, res: Response) => {
 });
 
 /**
- * Get Order Details
- * GET /api/v1/customer-portal/orders/:orderId
+ * @swagger
+ * /customer-portal/orders/{orderId}:
+ *   get:
+ *     summary: Get order details
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Order details retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/orders/:orderId', async (req: Request, res: Response) => {
   try {
@@ -146,8 +253,64 @@ router.get('/orders/:orderId', async (req: Request, res: Response) => {
 });
 
 /**
- * Book Service Request
- * POST /api/v1/customer-portal/service-requests
+ * @swagger
+ * /customer-portal/service-requests:
+ *   post:
+ *     summary: Book service request
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - description
+ *               - preferredDate
+ *               - address
+ *             properties:
+ *               type:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *                 default: MEDIUM
+ *               description:
+ *                 type: string
+ *               preferredDate:
+ *                 type: string
+ *                 format: date-time
+ *               address:
+ *                 type: string
+ *               salesOrderId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Service request booked successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *   get:
+ *     summary: Get customer service requests
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Service requests retrieved successfully
  */
 router.post('/service-requests', async (req: Request, res: Response) => {
   try {
@@ -227,8 +390,48 @@ router.get('/service-requests', async (req: Request, res: Response) => {
 });
 
 /**
- * Submit Customer Feedback
- * POST /api/v1/customer-portal/feedback
+ * @swagger
+ * /customer-portal/feedback:
+ *   post:
+ *     summary: Submit customer feedback
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rating
+ *               - feedback
+ *               - category
+ *             properties:
+ *               serviceRequestId:
+ *                 type: string
+ *                 format: uuid
+ *               salesOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               feedback:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Feedback submitted successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/feedback', async (req: Request, res: Response) => {
   try {
@@ -286,8 +489,21 @@ router.post('/feedback', async (req: Request, res: Response) => {
 });
 
 /**
- * Get Customer Documents
- * GET /api/v1/customer-portal/documents
+ * @swagger
+ * /customer-portal/documents:
+ *   get:
+ *     summary: Get customer documents
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Documents retrieved successfully
  */
 router.get('/documents', async (req: Request, res: Response) => {
   try {
@@ -314,8 +530,38 @@ router.get('/documents', async (req: Request, res: Response) => {
 });
 
 /**
- * Send Order Update via WhatsApp
- * POST /api/v1/customer-portal/orders/:orderId/notify
+ * @swagger
+ * /customer-portal/orders/{orderId}/notify:
+ *   post:
+ *     summary: Send order update notification
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order update sent successfully
  */
 router.post('/orders/:orderId/notify', async (req: Request, res: Response) => {
   try {
