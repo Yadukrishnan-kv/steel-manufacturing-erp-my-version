@@ -43,7 +43,20 @@ const updateRoleSchema = {
 };
 
 /**
- * Initialize predefined roles and permissions
+ * @swagger
+ * /rbac/initialize:
+ *   post:
+ *     summary: Initialize predefined roles and permissions
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: RBAC system initialized successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  */
 router.post('/initialize', 
   authenticate, 
@@ -64,7 +77,18 @@ router.post('/initialize',
 );
 
 /**
- * Get all roles
+ * @swagger
+ * /rbac/roles:
+ *   get:
+ *     summary: Get all roles
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Roles retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/roles', 
   authenticate, 
@@ -80,7 +104,36 @@ router.get('/roles',
 );
 
 /**
- * Create new role
+ * @swagger
+ * /rbac/roles:
+ *   post:
+ *     summary: Create new role
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - permissions
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Role created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/roles', 
   authenticate, 
@@ -110,7 +163,42 @@ router.post('/roles',
 );
 
 /**
- * Update role
+ * @swagger
+ * /rbac/roles/{roleId}:
+ *   put:
+ *     summary: Update role
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Role updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.put('/roles/:roleId', 
   authenticate, 
@@ -151,7 +239,27 @@ router.put('/roles/:roleId',
 );
 
 /**
- * Delete role
+ * @swagger
+ * /rbac/roles/{roleId}:
+ *   delete:
+ *     summary: Delete role
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Role deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.delete('/roles/:roleId', 
   authenticate, 
@@ -201,7 +309,18 @@ router.delete('/roles/:roleId',
 );
 
 /**
- * Get all permissions
+ * @swagger
+ * /rbac/permissions:
+ *   get:
+ *     summary: Get all permissions
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Permissions retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/permissions', 
   authenticate, 
@@ -229,7 +348,24 @@ router.get('/permissions',
 );
 
 /**
- * Get users with roles
+ * @swagger
+ * /rbac/users:
+ *   get:
+ *     summary: Get users with roles
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Users with roles retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/users', 
   authenticate, 
@@ -247,7 +383,37 @@ router.get('/users',
 );
 
 /**
- * Assign role to user
+ * @swagger
+ * /rbac/users/assign-role:
+ *   post:
+ *     summary: Assign role to user
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - roleId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *               roleId:
+ *                 type: string
+ *                 format: uuid
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Role assigned successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/users/assign-role', 
   authenticate, 
@@ -278,7 +444,37 @@ router.post('/users/assign-role',
 );
 
 /**
- * Remove role from user
+ * @swagger
+ * /rbac/users/remove-role:
+ *   post:
+ *     summary: Remove role from user
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - roleId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *               roleId:
+ *                 type: string
+ *                 format: uuid
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Role removed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/users/remove-role', 
   authenticate, 
@@ -304,7 +500,30 @@ router.post('/users/remove-role',
 );
 
 /**
- * Get user permissions
+ * @swagger
+ * /rbac/users/{userId}/permissions:
+ *   get:
+ *     summary: Get user permissions
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User permissions retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/users/:userId/permissions', 
   authenticate, 
@@ -326,7 +545,44 @@ router.get('/users/:userId/permissions',
 );
 
 /**
- * Check user permission
+ * @swagger
+ * /rbac/users/{userId}/check-permission:
+ *   post:
+ *     summary: Check user permission
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - module
+ *               - action
+ *             properties:
+ *               module:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *               resource:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Permission check result
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/users/:userId/check-permission', 
   authenticate, 
@@ -359,7 +615,24 @@ router.post('/users/:userId/check-permission',
 );
 
 /**
- * Get current user permissions
+ * @swagger
+ * /rbac/me/permissions:
+ *   get:
+ *     summary: Get current user permissions
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Current user permissions retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/me/permissions', 
   authenticate,
@@ -379,7 +652,18 @@ router.get('/me/permissions',
 );
 
 /**
- * Get accessible branches for current user
+ * @swagger
+ * /rbac/me/branches:
+ *   get:
+ *     summary: Get accessible branches for current user
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Accessible branches retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/me/branches', 
   authenticate,

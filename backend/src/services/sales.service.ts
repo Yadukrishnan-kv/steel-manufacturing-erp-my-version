@@ -315,6 +315,54 @@ export interface MonthlySalesData {
   conversionRate: number;
 }
 
+export interface SalesDashboardData {
+  period: {
+    type: string;
+    startDate: Date;
+    endDate: Date;
+  };
+  metrics: {
+    totalLeads: number;
+    qualifiedLeads: number;
+    convertedLeads: number;
+    totalEstimates: number;
+    approvedEstimates: number;
+    totalSalesOrders: number;
+    totalRevenue: number;
+    conversionRate: number;
+    estimateApprovalRate: number;
+    averageOrderValue: number;
+  };
+  recentActivities: {
+    leads: any[];
+    estimates: any[];
+  };
+  sourcePerformance: Array<{
+    source: string;
+    leadCount: number;
+    totalValue: number;
+    averageValue: number;
+  }>;
+}
+
+export interface FollowUpTask {
+  leadId: string;
+  leadNumber: string;
+  contactName: string;
+  phone: string;
+  email?: string;
+  source: string;
+  status: string;
+  priority: string;
+  assignedTo?: string;
+  followUpDate?: Date;
+  estimatedValue?: number;
+  daysOverdue: number;
+  leadScore: number;
+  qualificationStatus: string;
+  latestEstimate?: any;
+}
+
 export class SalesService {
   constructor(private prisma: PrismaClient) {}
 
@@ -1082,6 +1130,288 @@ export class SalesService {
   }
 
   /**
+   * Update lead status with automated workflow
+   */
+  async updateLeadStatus(
+    leadId: string,
+    newStatus: string,
+    updatedBy: string,
+    followUpDate?: Date,
+    notes?: string
+  ): Promise<LeadWithMeasurements> {
+    try {
+      const lead = await this.prisma.lead.findUnique({
+        where: { id: leadId },
+      });
+
+      if (!lead) {
+        throw new Error('Lead not found');
+      }
+
+      const updateData: any = {
+        status: newStatus,
+        updatedBy,
+        updatedAt: new Date(),
+      };
+
+      if (followUpDate) {
+        updateData.followUpDate = followUpDate;
+      }
+
+      // Auto-assign based on status change
+      if (newStatus === 'QUALIFIED' && !lead.assignedTo) {
+        updateData.assignedTo = await this.getNextAvailableSalesRep();
+      }
+
+      const updatedLead = await this.prisma.lead.update({
+        where: { id: leadId },
+        data: updateData,
+        include: {
+          measurements: true,
+          estimates: {
+            include: {
+              items: true,
+            },
+          },
+        },
+      });
+
+      // Log status change
+      logger.info('Lead status updated', {
+        leadId,
+        oldStatus: lead.status,
+        newStatus,
+        updatedBy,
+      });
+
+      return updatedLead as LeadWithMeasurements;
+    } catch (error) {
+      logger.error('Error updating lead status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get next available sales representative for lead assignment
+   */
+  private async getNextAvailableSalesRep(): Promise<string> {
+    // This would typically query user roles and workload
+    // For now, return a placeholder - this should be enhanced with actual logic
+    return 'SALES_REP_001';
+  }
+
+  /**
+   * Approve estimate with workflow validation
+   */
+  async approveEstimate(
+    estimateId: string,
+    approvedBy: string,
+    approvalLevel: number = 1,
+    notes?: string
+  ): Promise<EstimateData> {
+    try {
+      const estimate = await this.prisma.estimate.findUnique({
+        where: { id: estimateId },
+        include: {
+          lead: true,
+          items: true,
+        },
+      });
+
+      if (!estimate) {
+        throw new Error('Estimate not found');
+      }
+
+      // Check if approval is required based on amount
+      const requiredApprovalLevel = this.getRequiredApprovalLevel(estimate.discountAmount / estimate.totalAmount * 100);
+      
+      if (approvalLevel < requiredApprovalLevel) {
+        throw new Error(`Approval level ${requiredApprovalLevel} required for this discount`);
+      }
+
+      const updatedEstimate = await this.prisma.estimate.update({
+        where: { id: estimateId },
+        data: {
+          status: 'APPROVED',
+          approvalStatus: 'APPROVED',
+          approvedBy,
+          approvedAt: new Date(),
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      // Auto-update lead status
+      if (estimate.lead) {
+        await this.updateLeadStatus(
+          estimate.leadId,
+          'ESTIMATE_APPROVED',
+          approvedBy,
+          undefined,
+          `Estimate ${estimate.estimateNumber} approved`
+        );
+      }
+
+      logger.info('Estimate approved', {
+        estimateId,
+        estimateNumber: estimate.estimateNumber,
+        approvedBy,
+        approvalLevel,
+      });
+
+      return updatedEstimate as EstimateData;
+    } catch (error) {
+      logger.error('Error approving estimate:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get sales pipeline analytics
+   */
+  async getSalesPipelineAnalytics(branchId?: string): Promise<any> {
+    try {
+      const whereClause: any = {};
+      
+      if (branchId) {
+        whereClause.customer = {
+          branchId: branchId,
+        };
+      }
+
+      // Pipeline by status
+      const pipelineByStatus = await this.prisma.lead.groupBy({
+        by: ['status'],
+        where: whereClause,
+        _count: {
+          id: true,
+        },
+        _sum: {
+          estimatedValue: true,
+        },
+      });
+
+      // Conversion funnel
+      const totalLeads = await this.prisma.lead.count({ where: whereClause });
+      const qualifiedLeads = await this.prisma.lead.count({
+        where: { ...whereClause, status: 'QUALIFIED' },
+      });
+      const estimatesGenerated = await this.prisma.estimate.count({
+        where: {
+          lead: whereClause,
+        },
+      });
+      const convertedLeads = await this.prisma.lead.count({
+        where: { ...whereClause, status: 'CONVERTED' },
+      });
+
+      // Average time in each stage
+      const stageAnalytics = await this.calculateStageAnalytics(whereClause);
+
+      // Top performing sources
+      const sourcePerformance = await this.prisma.lead.groupBy({
+        by: ['source'],
+        where: whereClause,
+        _count: {
+          id: true,
+        },
+        _sum: {
+          estimatedValue: true,
+        },
+      });
+
+      return {
+        pipelineByStatus: pipelineByStatus.map(item => ({
+          status: item.status,
+          count: item._count.id,
+          totalValue: item._sum.estimatedValue || 0,
+        })),
+        conversionFunnel: {
+          totalLeads,
+          qualifiedLeads,
+          estimatesGenerated,
+          convertedLeads,
+          qualificationRate: totalLeads > 0 ? (qualifiedLeads / totalLeads) * 100 : 0,
+          estimateRate: qualifiedLeads > 0 ? (estimatesGenerated / qualifiedLeads) * 100 : 0,
+          conversionRate: estimatesGenerated > 0 ? (convertedLeads / estimatesGenerated) * 100 : 0,
+        },
+        stageAnalytics,
+        sourcePerformance: sourcePerformance.map(item => ({
+          source: item.source,
+          count: item._count.id,
+          totalValue: item._sum.estimatedValue || 0,
+          averageValue: item._count.id > 0 ? (item._sum.estimatedValue || 0) / item._count.id : 0,
+        })),
+      };
+    } catch (error) {
+      logger.error('Error getting sales pipeline analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate average time spent in each pipeline stage
+   */
+  private async calculateStageAnalytics(whereClause: any): Promise<any> {
+    // This would require audit trail or status change tracking
+    // For now, return placeholder data
+    return {
+      averageTimeToQualify: 2.5, // days
+      averageTimeToEstimate: 5.2, // days
+      averageTimeToConvert: 12.8, // days
+    };
+  }
+
+  /**
+   * Get lead assignment recommendations
+   */
+  async getLeadAssignmentRecommendations(leadId: string): Promise<any> {
+    try {
+      const lead = await this.prisma.lead.findUnique({
+        where: { id: leadId },
+        include: {
+          scoring: true,
+        },
+      });
+
+      if (!lead) {
+        throw new Error('Lead not found');
+      }
+
+      // Get available sales reps (this would query actual user data)
+      const recommendations = [
+        {
+          userId: 'SALES_REP_001',
+          name: 'John Smith',
+          currentWorkload: 15,
+          expertise: ['DOORS', 'WINDOWS'],
+          matchScore: 85,
+          reason: 'High expertise match and low workload',
+        },
+        {
+          userId: 'SALES_REP_002',
+          name: 'Sarah Johnson',
+          currentWorkload: 12,
+          expertise: ['CUSTOM_SOLUTIONS'],
+          matchScore: 78,
+          reason: 'Specializes in custom solutions',
+        },
+      ];
+
+      return {
+        leadId,
+        leadScore: lead.scoring?.totalScore || 0,
+        leadPriority: lead.priority,
+        recommendations: recommendations.sort((a, b) => b.matchScore - a.matchScore),
+      };
+    } catch (error) {
+      logger.error('Error getting lead assignment recommendations:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate sales analytics and reporting
    */
   async getSalesAnalytics(
@@ -1385,5 +1715,251 @@ export class SalesService {
     }
 
     return `${prefix}${String(sequence).padStart(4, '0')}`;
+  }
+
+  /**
+   * Get comprehensive sales dashboard data
+   */
+  async getSalesDashboard(branchId?: string, period: 'TODAY' | 'WEEK' | 'MONTH' | 'QUARTER' = 'MONTH'): Promise<any> {
+    try {
+      const { startDate, endDate } = this.getPeriodDates(period);
+      
+      const whereClause: any = {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      };
+
+      if (branchId) {
+        whereClause.customer = {
+          branchId: branchId,
+        };
+      }
+
+      // Key metrics
+      const [
+        totalLeads,
+        qualifiedLeads,
+        convertedLeads,
+        totalEstimates,
+        approvedEstimates,
+        totalSalesOrders,
+        totalRevenue,
+      ] = await Promise.all([
+        this.prisma.lead.count({ where: whereClause }),
+        this.prisma.lead.count({ where: { ...whereClause, status: 'QUALIFIED' } }),
+        this.prisma.lead.count({ where: { ...whereClause, status: 'CONVERTED' } }),
+        this.prisma.estimate.count({ where: { lead: whereClause } }),
+        this.prisma.estimate.count({ where: { lead: whereClause, status: 'APPROVED' } }),
+        this.prisma.salesOrder.count({ 
+          where: branchId ? { branchId, createdAt: whereClause.createdAt } : { createdAt: whereClause.createdAt }
+        }),
+        this.prisma.salesOrder.aggregate({
+          where: branchId ? { branchId, createdAt: whereClause.createdAt } : { createdAt: whereClause.createdAt },
+          _sum: { finalAmount: true },
+        }),
+      ]);
+
+      // Recent activities
+      const recentLeads = await this.prisma.lead.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          leadNumber: true,
+          contactName: true,
+          source: true,
+          status: true,
+          estimatedValue: true,
+          createdAt: true,
+        },
+      });
+
+      const recentEstimates = await this.prisma.estimate.findMany({
+        where: { lead: whereClause },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        include: {
+          lead: {
+            select: {
+              leadNumber: true,
+              contactName: true,
+            },
+          },
+        },
+      });
+
+      // Performance by source
+      const sourcePerformance = await this.prisma.lead.groupBy({
+        by: ['source'],
+        where: whereClause,
+        _count: { id: true },
+        _sum: { estimatedValue: true },
+      });
+
+      return {
+        period: {
+          type: period,
+          startDate,
+          endDate,
+        },
+        metrics: {
+          totalLeads,
+          qualifiedLeads,
+          convertedLeads,
+          totalEstimates,
+          approvedEstimates,
+          totalSalesOrders,
+          totalRevenue: totalRevenue._sum.finalAmount || 0,
+          conversionRate: totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0,
+          estimateApprovalRate: totalEstimates > 0 ? (approvedEstimates / totalEstimates) * 100 : 0,
+          averageOrderValue: totalSalesOrders > 0 ? (totalRevenue._sum.finalAmount || 0) / totalSalesOrders : 0,
+        },
+        recentActivities: {
+          leads: recentLeads,
+          estimates: recentEstimates,
+        },
+        sourcePerformance: sourcePerformance.map(item => ({
+          source: item.source,
+          leadCount: item._count.id,
+          totalValue: item._sum.estimatedValue || 0,
+          averageValue: item._count.id > 0 ? (item._sum.estimatedValue || 0) / item._count.id : 0,
+        })),
+      };
+    } catch (error) {
+      logger.error('Error getting sales dashboard:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get period date range
+   */
+  private getPeriodDates(period: 'TODAY' | 'WEEK' | 'MONTH' | 'QUARTER'): { startDate: Date; endDate: Date } {
+    const now = new Date();
+    const endDate = new Date(now);
+    let startDate = new Date(now);
+
+    switch (period) {
+      case 'TODAY':
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'WEEK':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'MONTH':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'QUARTER':
+        startDate.setMonth(now.getMonth() - 3);
+        break;
+    }
+
+    return { startDate, endDate };
+  }
+
+  /**
+   * Get follow-up tasks for sales team
+   */
+  async getFollowUpTasks(assignedTo?: string, priority?: string): Promise<any[]> {
+    try {
+      const whereClause: any = {
+        followUpDate: {
+          lte: new Date(),
+        },
+        status: {
+          notIn: ['CONVERTED', 'LOST'],
+        },
+      };
+
+      if (assignedTo) {
+        whereClause.assignedTo = assignedTo;
+      }
+
+      if (priority) {
+        whereClause.priority = priority;
+      }
+
+      const followUpTasks = await this.prisma.lead.findMany({
+        where: whereClause,
+        orderBy: [
+          { priority: 'desc' },
+          { followUpDate: 'asc' },
+        ],
+        include: {
+          scoring: {
+            select: {
+              totalScore: true,
+              qualificationStatus: true,
+            },
+          },
+          estimates: {
+            select: {
+              id: true,
+              estimateNumber: true,
+              finalAmount: true,
+              status: true,
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      return followUpTasks.map(lead => ({
+        leadId: lead.id,
+        leadNumber: lead.leadNumber,
+        contactName: lead.contactName,
+        phone: lead.phone,
+        email: lead.email,
+        source: lead.source,
+        status: lead.status,
+        priority: lead.priority,
+        assignedTo: lead.assignedTo,
+        followUpDate: lead.followUpDate,
+        estimatedValue: lead.estimatedValue,
+        daysOverdue: lead.followUpDate ? Math.floor((new Date().getTime() - lead.followUpDate.getTime()) / (1000 * 60 * 60 * 24)) : 0,
+        leadScore: lead.scoring?.totalScore || 0,
+        qualificationStatus: lead.scoring?.qualificationStatus || 'UNQUALIFIED',
+        latestEstimate: lead.estimates[0] || null,
+      }));
+    } catch (error) {
+      logger.error('Error getting follow-up tasks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk update lead assignments
+   */
+  async bulkAssignLeads(leadIds: string[], assignedTo: string, updatedBy: string): Promise<number> {
+    try {
+      const result = await this.prisma.lead.updateMany({
+        where: {
+          id: {
+            in: leadIds,
+          },
+        },
+        data: {
+          assignedTo,
+          updatedBy,
+          updatedAt: new Date(),
+        },
+      });
+
+      logger.info('Bulk lead assignment completed', {
+        leadCount: result.count,
+        assignedTo,
+        updatedBy,
+      });
+
+      return result.count;
+    } catch (error) {
+      logger.error('Error in bulk lead assignment:', error);
+      throw error;
+    }
   }
 }

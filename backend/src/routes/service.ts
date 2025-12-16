@@ -140,9 +140,55 @@ const mobileUpdateSchema = z.object({
 // Service Request Management Routes
 
 /**
- * POST /api/service/requests
- * Create service request with automatic technician assignment
- * Validates: Requirements 6.1 - Automatic technician assignment based on location and expertise
+ * @swagger
+ * /service/requests:
+ *   post:
+ *     summary: Create service request
+ *     description: Create service request with automatic technician assignment
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerId, type, description]
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               salesOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               type:
+ *                 type: string
+ *                 enum: [INSTALLATION, MAINTENANCE, REPAIR, WARRANTY_CLAIM]
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *               description:
+ *                 type: string
+ *               scheduledDate:
+ *                 type: string
+ *                 format: date-time
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   latitude:
+ *                     type: number
+ *                   longitude:
+ *                     type: number
+ *                   address:
+ *                     type: string
+ *     responses:
+ *       201:
+ *         description: Service request created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/requests',
   authenticate,
@@ -178,8 +224,25 @@ router.post('/requests',
 );
 
 /**
- * GET /api/service/requests/:id
- * Get service request with complete details
+ * @swagger
+ * /service/requests/{id}:
+ *   get:
+ *     summary: Get service request details
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Service request details
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/requests/:id',
   authenticate,
@@ -217,8 +280,37 @@ router.get('/requests/:id',
 );
 
 /**
- * GET /api/service/requests
- * Get all service requests with filtering and pagination
+ * @swagger
+ * /service/requests:
+ *   get:
+ *     summary: Get service requests list
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Service requests list
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/requests',
   authenticate,
@@ -316,9 +408,34 @@ router.get('/requests',
 );
 
 /**
- * POST /api/service/assign-technician
- * Assign technician based on location and expertise
- * Validates: Requirements 6.1 - Automatic technician assignment
+ * @swagger
+ * /service/assign-technician:
+ *   post:
+ *     summary: Assign technician to service request
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serviceRequestId
+ *               - technicianId
+ *             properties:
+ *               serviceRequestId:
+ *                 type: string
+ *                 format: uuid
+ *               technicianId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Technician assigned successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/assign-technician',
   authenticate,
@@ -348,9 +465,44 @@ router.post('/assign-technician',
 // AMC Contract Management Routes
 
 /**
- * POST /api/service/amc-contracts
- * Create AMC contract with tracking and renewal alerts
- * Validates: Requirements 6.2 - AMC management and tracking with renewal alerts
+ * @swagger
+ * /service/amc-contracts:
+ *   post:
+ *     summary: Create AMC contract
+ *     description: Create AMC contract with tracking and renewal alerts
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerId, startDate, endDate, amount, coverageDetails]
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *               amount:
+ *                 type: number
+ *               terms:
+ *                 type: string
+ *               coverageDetails:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: AMC contract created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/amc-contracts',
   authenticate,
@@ -382,8 +534,25 @@ router.post('/amc-contracts',
 );
 
 /**
- * GET /api/service/amc-contracts/:id
- * Get AMC contract with service history
+ * @swagger
+ * /service/amc-contracts/{id}:
+ *   get:
+ *     summary: Get AMC contract details
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: AMC contract details
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/amc-contracts/:id',
   authenticate,
@@ -421,8 +590,38 @@ router.get('/amc-contracts/:id',
 );
 
 /**
- * GET /api/service/amc-contracts
- * Get all AMC contracts with filtering and pagination
+ * @swagger
+ * /service/amc-contracts:
+ *   get:
+ *     summary: Get AMC contracts list
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: AMC contracts list
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/amc-contracts',
   authenticate,
@@ -501,9 +700,28 @@ router.get('/amc-contracts',
 // Warranty Management Routes
 
 /**
- * GET /api/service/warranty/:warrantyNumber
- * Validate warranty and guarantee with expiry management
- * Validates: Requirements 6.3 - Warranty and guarantee tracking with expiry management
+ * @swagger
+ * /service/warranty/{warrantyNumber}:
+ *   get:
+ *     summary: Validate warranty
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: warrantyNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: productId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Warranty details
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/warranty/:warrantyNumber',
   authenticate,
@@ -559,9 +777,40 @@ router.get('/warranty/:warrantyNumber',
 // Installation Management Routes
 
 /**
- * POST /api/service/schedule-installation
- * Schedule installation with geo-tagging capabilities
- * Validates: Requirements 6.4 - Installation scheduling with geo-tagging
+ * @swagger
+ * /service/schedule-installation:
+ *   post:
+ *     summary: Schedule installation
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - salesOrderId
+ *               - scheduledDate
+ *               - location
+ *             properties:
+ *               salesOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               scheduledDate:
+ *                 type: string
+ *                 format: date-time
+ *               location:
+ *                 type: object
+ *               technicianId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Installation scheduled
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/schedule-installation',
   authenticate,
@@ -596,9 +845,24 @@ router.post('/schedule-installation',
 // RMA Management Routes
 
 /**
- * POST /api/service/rma-requests
- * Create RMA request for replacements
- * Validates: Requirements 6.5 - RMA workflow for replacements
+ * @swagger
+ * /service/rma-requests:
+ *   post:
+ *     summary: Create RMA request
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: RMA request created
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/rma-requests',
   authenticate,
@@ -628,9 +892,24 @@ router.post('/rma-requests',
 // Service Completion Routes
 
 /**
- * POST /api/service/complete
- * Complete service with parts consumption and labor tracking
- * Validates: Requirements 6.5 - Service costing with parts and labor tracking
+ * @swagger
+ * /service/complete:
+ *   post:
+ *     summary: Complete service request
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Service completed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/complete',
   authenticate,
@@ -663,9 +942,28 @@ router.post('/complete',
 // Performance and Analytics Routes
 
 /**
- * GET /api/service/performance-metrics
- * Get service performance metrics and technician evaluation
- * Validates: Requirements 6.5 - Service performance metrics and technician evaluation
+ * @swagger
+ * /service/performance-metrics:
+ *   get:
+ *     summary: Get performance metrics
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: technicianId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Performance metrics
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/performance-metrics',
   authenticate,
@@ -696,8 +994,34 @@ router.get('/performance-metrics',
 );
 
 /**
- * GET /api/service/analytics
- * Get comprehensive service analytics
+ * @swagger
+ * /service/analytics:
+ *   get:
+ *     summary: Get service analytics
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Service analytics
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/analytics',
   authenticate,
@@ -729,8 +1053,38 @@ router.get('/analytics',
 );
 
 /**
- * PUT /api/service/requests/:id/status
- * Update service request status
+ * @swagger
+ * /service/requests/{id}/status:
+ *   put:
+ *     summary: Update service request status
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Status updated
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/requests/:id/status',
   authenticate,
@@ -777,8 +1131,29 @@ router.put('/requests/:id/status',
 );
 
 /**
- * GET /api/service/technicians
- * Get available technicians for assignment
+ * @swagger
+ * /service/technicians:
+ *   get:
+ *     summary: Get available technicians
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: department
+ *         schema:
+ *           type: string
+ *           default: SERVICE
+ *       - in: query
+ *         name: available
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *     responses:
+ *       200:
+ *         description: Technicians list
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/technicians',
   authenticate,
@@ -824,8 +1199,26 @@ router.get('/technicians',
 );
 
 /**
- * GET /api/service/dashboard
- * Get service dashboard data
+ * @swagger
+ * /service/dashboard:
+ *   get:
+ *     summary: Get service dashboard
+ *     description: Get service dashboard data with KPIs and metrics
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *     responses:
+ *       200:
+ *         description: Service dashboard data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboard',
   authenticate,
@@ -1059,9 +1452,31 @@ router.get('/mobile/parts-inventory',
 );
 
 /**
- * PUT /api/service/mobile/update/:serviceRequestId
- * Update service request from mobile app
- * Validates: Requirements 6.6 - Service technician mobile app integration
+ * @swagger
+ * /service/mobile/update/{serviceRequestId}:
+ *   put:
+ *     summary: Update service from mobile
+ *     tags: [Service]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: serviceRequestId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Service updated
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/mobile/update/:serviceRequestId',
   authenticate,

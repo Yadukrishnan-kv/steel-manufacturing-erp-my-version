@@ -65,14 +65,39 @@ The backend uses Jest for testing with the following setup:
 
 ## 📊 API Documentation
 
-API endpoints will be documented here as they are implemented.
+The API is fully documented using **Swagger/OpenAPI 3.0**.
 
-### Health Check
-- `GET /health` - System health status
+### Accessing Documentation
 
-### Authentication
-- `POST /api/v1/auth/login` - User login
-- `POST /api/v1/auth/logout` - User logout
-- `POST /api/v1/auth/refresh` - Refresh JWT token
+- **Swagger UI**: `http://localhost:{PORT}/api-docs` - Interactive API documentation
+- **OpenAPI JSON**: `http://localhost:{PORT}/api-docs.json` - Raw OpenAPI specification
 
-More endpoints will be added as modules are implemented.
+### Available API Modules
+
+| Module | Base Path | Description |
+|--------|-----------|-------------|
+| Authentication | `/api/v1/auth` | User login, logout, token refresh, password management |
+| Manufacturing | `/api/v1/manufacturing` | Production orders, BOM, work centers, scheduling |
+| Sales | `/api/v1/sales` | Leads, estimates, orders, customers |
+| Inventory | `/api/v1/inventory` | Stock management, warehouses, transactions |
+| Procurement | `/api/v1/procurement` | Purchase requisitions, RFQs, purchase orders, GRN |
+| Quality Control | `/api/v1/qc` | Inspections, certificates, analytics |
+| Service | `/api/v1/service` | Service requests, AMC contracts, warranty |
+| Finance | `/api/v1/finance` | Invoices, payments, P&L, tax calculations |
+| HR | `/api/v1/hr` | Employees, attendance, payroll |
+| Health | `/health` | System health status |
+
+### Quick Reference
+
+```bash
+# Health Check
+GET /health
+
+# Authentication
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+POST /api/v1/auth/refresh
+GET  /api/v1/auth/me
+
+# For complete API documentation, visit /api-docs
+```

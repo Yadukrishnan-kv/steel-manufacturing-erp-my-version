@@ -95,6 +95,94 @@ const vendorPortalSchema = z.object({
   permissions: z.array(z.string())
 });
 
+/**
+ * @swagger
+ * /suppliers:
+ *   post:
+ *     summary: Create new supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - name
+ *               - phone
+ *               - address
+ *               - city
+ *               - state
+ *               - pincode
+ *               - branchId
+ *             properties:
+ *               code:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               pincode:
+ *                 type: string
+ *               gstNumber:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Supplier created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get all suppliers
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: rating
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Suppliers retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Supplier Master Data Management APIs
 router.post('/', authenticate, validate({ body: createSupplierSchema }), async (req: Request, res: Response) => {
   try {
@@ -144,6 +232,27 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}:
+ *   get:
+ *     summary: Get supplier by ID
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Supplier retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:supplierId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { supplierId } = req.params;
@@ -175,6 +284,33 @@ router.get('/:supplierId', authenticate, async (req: Request, res: Response): Pr
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}:
+ *   put:
+ *     summary: Update supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Supplier updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.put('/:supplierId', authenticate, validate({ body: updateSupplierSchema }), async (req: Request, res: Response): Promise<void> => {
   try {
     const { supplierId } = req.params;
@@ -207,6 +343,35 @@ router.put('/:supplierId', authenticate, validate({ body: updateSupplierSchema }
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/deactivate:
+ *   put:
+ *     summary: Deactivate supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Supplier deactivated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.put('/:supplierId/deactivate', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { supplierId } = req.params;
@@ -240,6 +405,32 @@ router.put('/:supplierId/deactivate', authenticate, async (req: Request, res: Re
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/performance:
+ *   get:
+ *     summary: Get supplier performance metrics
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: months
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Performance metrics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Vendor Performance Tracking APIs
 router.get('/:supplierId/performance', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -276,6 +467,31 @@ router.get('/:supplierId/performance', authenticate, async (req: Request, res: R
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/top-performers:
+ *   get:
+ *     summary: Get top performing suppliers
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Top performers retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/top-performers', authenticate, async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
@@ -298,6 +514,27 @@ router.get('/top-performers', authenticate, async (req: Request, res: Response) 
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/rfq/{rfqId}/quote-comparison:
+ *   get:
+ *     summary: Compare supplier quotes for RFQ
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: rfqId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Quote comparison retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Supplier Quote Comparison APIs
 router.get('/rfq/:rfqId/quote-comparison', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -364,6 +601,44 @@ router.get('/:supplierId/quote-history', authenticate, async (req: Request, res:
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/payment-terms:
+ *   put:
+ *     summary: Update supplier payment terms
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - terms
+ *             properties:
+ *               terms:
+ *                 type: string
+ *               creditLimit:
+ *                 type: number
+ *               creditDays:
+ *                 type: number
+ *               advancePercentage:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Payment terms updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Payment Terms and Credit Management APIs
 router.put('/:supplierId/payment-terms', authenticate, validate({ body: paymentTermsSchema }), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -448,6 +723,75 @@ router.get('/payments/overdue', authenticate, async (req: Request, res: Response
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/communications:
+ *   post:
+ *     summary: Log supplier communication
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - subject
+ *               - content
+ *               - direction
+ *               - status
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [EMAIL, PHONE, MEETING, PORTAL, DOCUMENT]
+ *               subject:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               direction:
+ *                 type: string
+ *                 enum: [INBOUND, OUTBOUND]
+ *               status:
+ *                 type: string
+ *                 enum: [SENT, DELIVERED, READ, REPLIED]
+ *     responses:
+ *       201:
+ *         description: Communication logged successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get supplier communication history
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Communication history retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Communication and Document Management APIs
 router.post('/:supplierId/communications', authenticate, validate({ body: communicationSchema }), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -517,6 +861,75 @@ router.get('/:supplierId/communications', authenticate, async (req: Request, res
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/documents:
+ *   post:
+ *     summary: Upload supplier document
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - documentType
+ *               - documentName
+ *               - filePath
+ *               - fileSize
+ *               - mimeType
+ *             properties:
+ *               documentType:
+ *                 type: string
+ *                 enum: [CONTRACT, CERTIFICATE, INVOICE, AGREEMENT, COMPLIANCE, OTHER]
+ *               documentName:
+ *                 type: string
+ *               filePath:
+ *                 type: string
+ *               fileSize:
+ *                 type: number
+ *               mimeType:
+ *                 type: string
+ *               expiryDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get supplier documents
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: documentType
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Documents retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/:supplierId/documents', authenticate, validate({ body: documentUploadSchema }), async (req: Request, res: Response): Promise<void> => {
   try {
     const { supplierId } = req.params;
@@ -586,6 +999,66 @@ router.get('/:supplierId/documents', authenticate, async (req: Request, res: Res
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/{supplierId}/portal-access:
+ *   post:
+ *     summary: Create vendor portal access
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - permissions
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               isActive:
+ *                 type: boolean
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Portal access created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   put:
+ *     summary: Update vendor portal access
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: supplierId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Portal access updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Vendor Portal Integration APIs
 router.post('/:supplierId/portal-access', authenticate, validate({ body: vendorPortalSchema }), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -686,6 +1159,26 @@ router.get('/:supplierId/portal-activity', authenticate, async (req: Request, re
   }
 });
 
+/**
+ * @swagger
+ * /suppliers/dashboard:
+ *   get:
+ *     summary: Get supplier dashboard
+ *     tags: [Suppliers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 // Reporting and Analytics APIs
 router.get('/dashboard', authenticate, async (req: Request, res: Response) => {
   try {

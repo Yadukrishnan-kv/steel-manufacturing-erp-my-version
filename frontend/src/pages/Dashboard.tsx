@@ -298,7 +298,11 @@ const Dashboard: React.FC = () => {
 
   const {
     isLoading: biLoading,
-  } = useGetBIDashboardQuery({ period: '6months', metric: 'revenue' });
+  } = useGetBIDashboardQuery({ 
+    role: user?.role || 'executive', 
+    period: '6months', 
+    metric: 'revenue' 
+  });
 
   const {
     data: alertsData,

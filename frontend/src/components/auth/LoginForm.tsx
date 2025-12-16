@@ -22,28 +22,14 @@ const schema = yup.object({
   password: yup.string().required('Password is required'),
 });
 
-// Clean, modern professional styling
+// Clean, modern professional styling - elegant enterprise design
 const LoginContainer = styled(Box)`
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
-    pointer-events: none;
-  }
 `;
 
 const LoginWrapper = styled(Container)`
@@ -53,34 +39,22 @@ const LoginWrapper = styled(Container)`
 `;
 
 const LoginGrid = styled(Grid)`
-  background: white;
+  background: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  min-height: 600px;
+  min-height: 580px;
+  border: 1px solid #e2e8f0;
 `;
 
 const LeftPanel = styled(Grid)`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
   color: white;
-  padding: 60px 40px;
+  padding: 50px 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-  }
   
   @media (max-width: 960px) {
     display: none;
@@ -100,44 +74,43 @@ const RightPanel = styled(Grid)`
 
 const BrandLogo = styled(Box)`
   text-align: center;
-  margin-bottom: 40px;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 36px;
 `;
 
 const LogoIcon = styled.div`
-  font-size: 4rem;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  font-size: 3.5rem;
+  margin-bottom: 12px;
 `;
 
 const FeatureList = styled(Box)`
-  margin-top: 40px;
-  position: relative;
-  z-index: 1;
+  margin-top: 32px;
 `;
 
 const FeatureItem = styled(Box)`
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(8px);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
   }
 `;
 
 const FeatureIcon = styled.div`
-  font-size: 2rem;
-  margin-right: 16px;
-  min-width: 50px;
+  font-size: 1.5rem;
+  margin-right: 14px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 `;
 
 const LoginCard = styled(ModernCard)`
@@ -149,29 +122,30 @@ const LoginCard = styled(ModernCard)`
 
 const DemoSection = styled(Box)`
   margin-top: 24px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 12px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 `;
 
 const DemoChip = styled(Chip)`
   margin: 4px !important;
-  background: white !important;
+  background: #f1f5f9 !important;
   border: 1px solid #e2e8f0 !important;
   transition: all 0.2s ease !important;
+  font-weight: 500 !important;
   
   &:hover {
-    background: #3b82f6 !important;
+    background: #1e3a5f !important;
     color: white !important;
-    border-color: #3b82f6 !important;
-    transform: translateY(-1px);
+    border-color: #1e3a5f !important;
   }
   
   &.selected {
-    background: #3b82f6 !important;
+    background: #1e3a5f !important;
     color: white !important;
-    border-color: #3b82f6 !important;
+    border-color: #1e3a5f !important;
   }
 `;
 
@@ -243,10 +217,18 @@ const LoginForm: React.FC = () => {
           <LeftPanel item xs={12} md={6}>
             <BrandLogo>
               <LogoIcon>🏗️</LogoIcon>
-              <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
+              <Typography variant="h4" sx={{ 
+                fontWeight: 700, 
+                mb: 1,
+                color: '#ffffff',
+                letterSpacing: '-0.01em'
+              }}>
                 SteelForge
               </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 'normal' }}>
+              <Typography variant="body2" sx={{ 
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontWeight: 400
+              }}>
                 Next-Generation Manufacturing Intelligence
               </Typography>
             </BrandLogo>
@@ -258,10 +240,17 @@ const LoginForm: React.FC = () => {
                 <FeatureItem key={index}>
                   <FeatureIcon>{feature.icon}</FeatureIcon>
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                    <Typography variant="body1" sx={{ 
+                      fontWeight: 600, 
+                      color: '#ffffff',
+                      fontSize: '0.95rem'
+                    }}>
                       {feature.title}
                     </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    <Typography variant="body2" sx={{ 
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      fontSize: '0.8rem'
+                    }}>
                       {feature.desc}
                     </Typography>
                   </Box>
@@ -277,10 +266,18 @@ const LoginForm: React.FC = () => {
             <LoginCard>
               <CardContent>
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
-                  <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1, color: '#1e293b' }}>
+                  <Typography variant="h4" component="h1" sx={{ 
+                    fontWeight: 'bold', 
+                    mb: 1, 
+                    background: 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textAlign: 'center'
+                  }}>
                     Welcome Back
                   </Typography>
-                  <Typography variant="body1" color="text.secondary">
+                  <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 500 }}>
                     Sign in to access your dashboard
                   </Typography>
                 </Box>
@@ -323,7 +320,15 @@ const LoginForm: React.FC = () => {
                     variant="primary"
                     disabled={isLoading}
                     loading={isLoading}
-                    style={{ marginBottom: '20px', padding: '14px', fontSize: '1rem' }}
+                    style={{ 
+                      marginBottom: '20px', 
+                      padding: '16px', 
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      letterSpacing: '0.025em',
+                      borderRadius: '12px',
+                      minHeight: '52px'
+                    }}
                   >
                     {isLoading ? 'Signing In...' : 'Sign In'}
                   </ModernButton>
@@ -356,27 +361,43 @@ const LoginForm: React.FC = () => {
                   </Typography>
                 </DemoSection>
 
-                <Box sx={{ mt: 3, p: 2, bgcolor: '#f0f9ff', borderRadius: 2, border: '1px solid #bae6fd' }}>
-                  <Typography variant="caption" color="#0369a1" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>
+                <Box sx={{ 
+                  mt: 3, 
+                  p: 3, 
+                  background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', 
+                  borderRadius: 3, 
+                  border: '1px solid #bae6fd',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <Typography variant="caption" sx={{ 
+                    display: 'block', 
+                    mb: 1.5, 
+                    fontWeight: 'bold',
+                    color: '#0369a1',
+                    fontSize: '0.875rem'
+                  }}>
                     🔐 Enterprise Security
                   </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                    <Typography variant="caption" color="#0369a1" sx={{ fontWeight: 'medium' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: '#0369a1' }}>
                       🛡️ SOC 2 Compliant
                     </Typography>
-                    <Typography variant="caption" color="#0369a1" sx={{ fontWeight: 'medium' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: '#0369a1' }}>
                       🔒 256-bit Encryption
                     </Typography>
-                    <Typography variant="caption" color="#0369a1" sx={{ fontWeight: 'medium' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: '#0369a1' }}>
                       📱 2FA Ready
                     </Typography>
                   </Box>
                 </Box>
 
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Need help? Contact support at{' '}
-                    <Typography component="span" variant="caption" sx={{ color: '#3b82f6', fontWeight: 'medium' }}>
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>
+                    Need help? Contact{' '}
+                    <Typography component="span" variant="caption" sx={{ 
+                      color: '#1e3a5f',
+                      fontWeight: 600
+                    }}>
                       support@steelforge.com
                     </Typography>
                   </Typography>

@@ -16,6 +16,7 @@ import { alertRoutes } from './alert';
 import { biRoutes } from './bi';
 import { customerPortalRoutes } from './customerPortal';
 import employeePortalRoutes from './employeePortal';
+import { adminRoutes } from './admin';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.use(`${API_VERSION}/alerts`, alertRoutes);
 router.use(`${API_VERSION}/bi`, biRoutes);
 router.use(`${API_VERSION}/customer-portal`, customerPortalRoutes);
 router.use(`${API_VERSION}/employee-portal`, employeePortalRoutes);
+router.use(`${API_VERSION}/admin`, adminRoutes);
 
 // API root endpoint
 router.get(API_VERSION, (req, res) => {

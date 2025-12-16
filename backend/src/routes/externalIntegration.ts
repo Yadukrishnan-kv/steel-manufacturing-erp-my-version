@@ -44,8 +44,38 @@ const communicationSchema = z.object({
 });
 
 /**
- * Sync leads from Meta (Facebook/Instagram)
- * POST /api/external-integration/sync/meta
+ * @swagger
+ * /external-integration/sync/meta:
+ *   post:
+ *     summary: Sync leads from Meta (Facebook/Instagram)
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               since:
+ *                 type: string
+ *                 format: date-time
+ *               until:
+ *                 type: string
+ *                 format: date-time
+ *               limit:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 1000
+ *               autoScore:
+ *                 type: boolean
+ *               autoFollowUp:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Meta leads sync completed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/sync/meta', 
   authenticate,
@@ -77,8 +107,38 @@ router.post('/sync/meta',
 );
 
 /**
- * Sync leads from Google Ads
- * POST /api/external-integration/sync/google
+ * @swagger
+ * /external-integration/sync/google:
+ *   post:
+ *     summary: Sync leads from Google Ads
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *               since:
+ *                 type: string
+ *                 format: date-time
+ *               until:
+ *                 type: string
+ *                 format: date-time
+ *               limit:
+ *                 type: integer
+ *               autoScore:
+ *                 type: boolean
+ *               autoFollowUp:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Google Ads leads sync completed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/sync/google',
   authenticate,
@@ -112,8 +172,37 @@ router.post('/sync/google',
 );
 
 /**
- * Send customer notification
- * POST /api/external-integration/notifications/send
+ * @swagger
+ * /external-integration/notifications/send:
+ *   post:
+ *     summary: Send customer notification
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - customerId
+ *               - type
+ *               - data
+ *             properties:
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               type:
+ *                 type: string
+ *                 enum: [ORDER_CONFIRMATION, PRODUCTION_UPDATE, DELIVERY_NOTIFICATION, SERVICE_REMINDER]
+ *               data:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Notifications sent successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/notifications/send',
   authenticate,
@@ -139,8 +228,46 @@ router.post('/notifications/send',
 );
 
 /**
- * Send communication
- * POST /api/external-integration/communications/send
+ * @swagger
+ * /external-integration/communications/send:
+ *   post:
+ *     summary: Send communication
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - recipient
+ *               - content
+ *             properties:
+ *               leadId:
+ *                 type: string
+ *                 format: uuid
+ *               customerId:
+ *                 type: string
+ *                 format: uuid
+ *               type:
+ *                 type: string
+ *                 enum: [EMAIL, SMS, WHATSAPP, PHONE, MEETING]
+ *               recipient:
+ *                 type: string
+ *               subject:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               metadata:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Communication sent successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/communications/send',
   authenticate,
@@ -165,8 +292,33 @@ router.post('/communications/send',
 );
 
 /**
- * Get communication history
- * GET /api/external-integration/communications/history
+ * @swagger
+ * /external-integration/communications/history:
+ *   get:
+ *     summary: Get communication history
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: leadId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Communication history retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/communications/history',
   authenticate,
@@ -196,8 +348,42 @@ router.get('/communications/history',
 );
 
 /**
- * Calculate lead score
- * POST /api/external-integration/leads/:leadId/score
+ * @swagger
+ * /external-integration/leads/{leadId}/score:
+ *   post:
+ *     summary: Calculate lead score
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lead score calculated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get lead score
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lead score retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.post('/leads/:leadId/score',
   authenticate,
@@ -272,8 +458,29 @@ router.get('/leads/:leadId/score',
 );
 
 /**
- * Get leads by qualification status
- * GET /api/external-integration/leads/qualified/:status
+ * @swagger
+ * /external-integration/leads/qualified/{status}:
+ *   get:
+ *     summary: Get leads by qualification status
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: status
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [UNQUALIFIED, QUALIFIED, HOT, COLD]
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Qualified leads retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leads/qualified/:status',
   authenticate,
@@ -310,8 +517,29 @@ router.get('/leads/qualified/:status',
 );
 
 /**
- * Get integration statistics
- * GET /api/external-integration/stats
+ * @swagger
+ * /external-integration/stats:
+ *   get:
+ *     summary: Get integration statistics
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: since
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: until
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Integration stats retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/stats',
   authenticate,
@@ -340,8 +568,18 @@ router.get('/stats',
 );
 
 /**
- * Test external API connections
- * GET /api/external-integration/test-connections
+ * @swagger
+ * /external-integration/test-connections:
+ *   get:
+ *     summary: Test external API connections
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Connection tests completed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/test-connections',
   authenticate,
@@ -366,8 +604,43 @@ router.get('/test-connections',
 );
 
 /**
- * WhatsApp webhook endpoint
- * POST /api/external-integration/webhooks/whatsapp
+ * @swagger
+ * /external-integration/webhooks/whatsapp:
+ *   post:
+ *     summary: WhatsApp webhook endpoint
+ *     tags: [External Integration]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully
+ *       401:
+ *         description: Invalid webhook signature
+ *   get:
+ *     summary: WhatsApp webhook verification
+ *     tags: [External Integration]
+ *     parameters:
+ *       - in: query
+ *         name: hub.mode
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.verify_token
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.challenge
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Webhook verified
+ *       403:
+ *         description: Invalid verification token
  */
 router.post('/webhooks/whatsapp', async (req: Request, res: Response) => {
   try {
@@ -427,8 +700,43 @@ router.get('/webhooks/whatsapp', (req: Request, res: Response) => {
 });
 
 /**
- * Meta webhook endpoint
- * POST /api/external-integration/webhooks/meta
+ * @swagger
+ * /external-integration/webhooks/meta:
+ *   post:
+ *     summary: Meta webhook endpoint
+ *     tags: [External Integration]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully
+ *       401:
+ *         description: Invalid webhook signature
+ *   get:
+ *     summary: Meta webhook verification
+ *     tags: [External Integration]
+ *     parameters:
+ *       - in: query
+ *         name: hub.mode
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.verify_token
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.challenge
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Webhook verified
+ *       403:
+ *         description: Invalid verification token
  */
 router.post('/webhooks/meta', async (req: Request, res: Response) => {
   try {

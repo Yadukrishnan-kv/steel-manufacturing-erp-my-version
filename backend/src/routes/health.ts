@@ -6,7 +6,50 @@ import { logger } from '../utils/logger';
 const router = Router();
 
 /**
- * Basic health check endpoint
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Basic health check
+ *     tags: [Health]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: OK
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                     uptime:
+ *                       type: number
+ *                       description: Server uptime in seconds
+ *                     environment:
+ *                       type: string
+ *                       example: development
+ *                     version:
+ *                       type: string
+ *                       example: 1.0.0
+ *                     memory:
+ *                       type: object
+ *                       properties:
+ *                         used:
+ *                           type: number
+ *                           description: Used heap memory in MB
+ *                         total:
+ *                           type: number
+ *                           description: Total heap memory in MB
  */
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const healthData = {
@@ -28,7 +71,17 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 /**
- * Detailed health check with database connectivity
+ * @swagger
+ * /health/detailed:
+ *   get:
+ *     summary: Detailed health check with database connectivity
+ *     tags: [Health]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: All services healthy
+ *       503:
+ *         description: One or more services unhealthy
  */
 router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
   const startTime = Date.now();
@@ -79,7 +132,17 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 /**
- * Readiness probe for Kubernetes/Docker
+ * @swagger
+ * /health/ready:
+ *   get:
+ *     summary: Readiness probe for Kubernetes/Docker
+ *     tags: [Health]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Service is ready to accept traffic
+ *       503:
+ *         description: Service is not ready
  */
 router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
   const isDatabaseHealthy = await checkDatabaseConnection();
@@ -101,7 +164,15 @@ router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 /**
- * Liveness probe for Kubernetes/Docker
+ * @swagger
+ * /health/live:
+ *   get:
+ *     summary: Liveness probe for Kubernetes/Docker
+ *     tags: [Health]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Service is alive
  */
 router.get('/live', (req: Request, res: Response) => {
   res.json({

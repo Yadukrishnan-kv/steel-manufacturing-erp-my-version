@@ -47,9 +47,52 @@ const alertUpdateSchema = z.object({
 router.use(authenticate);
 
 /**
- * @route POST /api/v1/alerts/sla-configurations
- * @desc Create SLA configuration
- * @access Private
+ * @swagger
+ * /alerts/sla-configurations:
+ *   post:
+ *     summary: Create SLA configuration
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - module
+ *               - process
+ *               - slaHours
+ *               - escalationLevels
+ *             properties:
+ *               module:
+ *                 type: string
+ *               process:
+ *                 type: string
+ *               slaHours:
+ *                 type: number
+ *               escalationLevels:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     level:
+ *                       type: number
+ *                     roleOrUserId:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                       enum: [ROLE, USER]
+ *                     hoursAfter:
+ *                       type: number
+ *     responses:
+ *       201:
+ *         description: SLA configuration created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         description: Server error
  */
 router.post('/sla-configurations', validate({ body: slaConfigurationSchema }), async (req: Request, res: Response) => {
   try {
@@ -70,9 +113,31 @@ router.post('/sla-configurations', validate({ body: slaConfigurationSchema }), a
 });
 
 /**
- * @route GET /api/v1/alerts/sla-configurations
- * @desc Get SLA configurations
- * @access Private
+ * @swagger
+ * /alerts/sla-configurations:
+ *   get:
+ *     summary: Get SLA configurations
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: module
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: process
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: SLA configurations retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/sla-configurations', async (req: Request, res: Response) => {
   try {
@@ -99,9 +164,31 @@ router.get('/sla-configurations', async (req: Request, res: Response) => {
 });
 
 /**
- * @route PUT /api/v1/alerts/sla-configurations/:id
- * @desc Update SLA configuration
- * @access Private
+ * @swagger
+ * /alerts/sla-configurations/{id}:
+ *   put:
+ *     summary: Update SLA configuration
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: SLA configuration updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/sla-configurations/:id', async (req: Request, res: Response) => {
   try {
@@ -123,9 +210,47 @@ router.put('/sla-configurations/:id', async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/alerts
- * @desc Create alert
- * @access Private
+ * @swagger
+ * /alerts:
+ *   post:
+ *     summary: Create alert
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - module
+ *               - referenceId
+ *               - message
+ *               - priority
+ *             properties:
+ *               type:
+ *                 type: string
+ *               module:
+ *                 type: string
+ *               referenceId:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *               assignedTo:
+ *                 type: string
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Alert created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/', validate({ body: alertSchema }), async (req: Request, res: Response) => {
   try {
@@ -151,9 +276,51 @@ router.post('/', validate({ body: alertSchema }), async (req: Request, res: Resp
 });
 
 /**
- * @route GET /api/v1/alerts
- * @desc Get alerts with filtering and pagination
- * @access Private
+ * @swagger
+ * /alerts:
+ *   get:
+ *     summary: Get alerts with filtering and pagination
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: module
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, ACKNOWLEDGED, RESOLVED]
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [LOW, MEDIUM, HIGH, CRITICAL]
+ *       - in: query
+ *         name: assignedTo
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Alerts retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -192,9 +359,40 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
- * @route PUT /api/v1/alerts/:id
- * @desc Update alert
- * @access Private
+ * @swagger
+ * /alerts/{id}:
+ *   put:
+ *     summary: Update alert
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, ACKNOWLEDGED, RESOLVED]
+ *               assignedTo:
+ *                 type: string
+ *               resolvedAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Alert updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/:id', validate({ body: alertUpdateSchema }), async (req: Request, res: Response) => {
   try {
@@ -221,9 +419,40 @@ router.put('/:id', validate({ body: alertUpdateSchema }), async (req: Request, r
 });
 
 /**
- * @route POST /api/v1/alerts/notifications
- * @desc Send alert notification
- * @access Private
+ * @swagger
+ * /alerts/notifications:
+ *   post:
+ *     summary: Send alert notification
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - alertId
+ *               - channel
+ *               - recipient
+ *               - message
+ *             properties:
+ *               alertId:
+ *                 type: string
+ *                 format: uuid
+ *               channel:
+ *                 type: string
+ *                 enum: [EMAIL, SMS, WHATSAPP, APP]
+ *               recipient:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Alert notification sent successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/notifications', validate({ body: alertNotificationSchema }), async (req: Request, res: Response) => {
   try {
@@ -244,9 +473,18 @@ router.post('/notifications', validate({ body: alertNotificationSchema }), async
 });
 
 /**
- * @route POST /api/v1/alerts/escalations/process
- * @desc Process escalations for overdue alerts
- * @access Private
+ * @swagger
+ * /alerts/escalations/process:
+ *   post:
+ *     summary: Process escalations for overdue alerts
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Escalations processed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/escalations/process', async (req: Request, res: Response) => {
   try {
@@ -270,9 +508,18 @@ router.post('/escalations/process', async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/alerts/reminders/generate
- * @desc Generate automatic reminders
- * @access Private
+ * @swagger
+ * /alerts/reminders/generate:
+ *   post:
+ *     summary: Generate automatic reminders
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reminders generated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/reminders/generate', async (req: Request, res: Response) => {
   try {
@@ -296,9 +543,28 @@ router.post('/reminders/generate', async (req: Request, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/alerts/dashboard
- * @desc Get alert dashboard data
- * @access Private
+ * @swagger
+ * /alerts/dashboard:
+ *   get:
+ *     summary: Get alert dashboard data
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: module
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Alert dashboard data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/dashboard', async (req: Request, res: Response) => {
   try {
@@ -324,9 +590,33 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/alerts/sla-performance
- * @desc Get SLA performance metrics
- * @access Private
+ * @swagger
+ * /alerts/sla-performance:
+ *   get:
+ *     summary: Get SLA performance metrics
+ *     tags: [Alerts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: module
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: SLA performance metrics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/sla-performance', async (req: Request, res: Response) => {
   try {

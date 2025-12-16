@@ -157,8 +157,62 @@ const trainingEnrollmentSchema = z.object({
 // ============================================================================
 
 /**
- * Create new employee
- * POST /api/v1/hr/employees
+ * @swagger
+ * /hr/employees:
+ *   post:
+ *     summary: Create new employee
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeCode
+ *               - firstName
+ *               - lastName
+ *               - dateOfJoining
+ *               - designation
+ *               - department
+ *               - branchId
+ *             properties:
+ *               employeeCode:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *               dateOfJoining:
+ *                 type: string
+ *                 format: date
+ *               designation:
+ *                 type: string
+ *               department:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *                 format: uuid
+ *               reportingTo:
+ *                 type: string
+ *                 format: uuid
+ *               salary:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Employee created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/employees', 
   authenticate,
@@ -185,8 +239,48 @@ router.post('/employees',
 );
 
 /**
- * Update employee
- * PUT /api/v1/hr/employees/:id
+ * @swagger
+ * /hr/employees/{id}:
+ *   put:
+ *     summary: Update employee
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Employee updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   get:
+ *     summary: Get employee by ID
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Employee retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.put('/employees/:id',
   authenticate,
@@ -293,8 +387,44 @@ router.get('/employees/branch/:branchId',
 // ============================================================================
 
 /**
- * Process biometric attendance
- * POST /api/v1/hr/attendance/biometric
+ * @swagger
+ * /hr/attendance/biometric:
+ *   post:
+ *     summary: Process biometric attendance
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - date
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               checkIn:
+ *                 type: string
+ *                 format: date-time
+ *               checkOut:
+ *                 type: string
+ *                 format: date-time
+ *               deviceId:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Attendance processed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/attendance/biometric',
   authenticate,
@@ -321,8 +451,50 @@ router.post('/attendance/biometric',
 );
 
 /**
- * Process geo-tagged attendance
- * POST /api/v1/hr/attendance/geo-tagged
+ * @swagger
+ * /hr/attendance/geo-tagged:
+ *   post:
+ *     summary: Process geo-tagged attendance
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - date
+ *               - latitude
+ *               - longitude
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               checkIn:
+ *                 type: string
+ *                 format: date-time
+ *               checkOut:
+ *                 type: string
+ *                 format: date-time
+ *               latitude:
+ *                 type: number
+ *               longitude:
+ *                 type: number
+ *               accuracy:
+ *                 type: number
+ *               address:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Geo-tagged attendance processed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/attendance/geo-tagged',
   authenticate,
@@ -440,8 +612,43 @@ router.post('/attendance/overtime/:employeeId',
 // ============================================================================
 
 /**
- * Calculate payroll
- * POST /api/v1/hr/payroll/calculate
+ * @swagger
+ * /hr/payroll/calculate:
+ *   post:
+ *     summary: Calculate payroll
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - period
+ *               - basicSalary
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               period:
+ *                 type: string
+ *                 description: Period in YYYY-MM format
+ *               basicSalary:
+ *                 type: number
+ *               allowances:
+ *                 type: number
+ *               overtimeHours:
+ *                 type: number
+ *               overtimeRate:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Payroll calculated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/payroll/calculate',
   authenticate,
@@ -506,8 +713,50 @@ router.post('/payroll/process/:employeeId/:period',
 // ============================================================================
 
 /**
- * Record KPI metric
- * POST /api/v1/hr/kpi/metrics
+ * @swagger
+ * /hr/kpi/metrics:
+ *   post:
+ *     summary: Record KPI metric
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - metricName
+ *               - targetValue
+ *               - actualValue
+ *               - period
+ *               - weightage
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               metricName:
+ *                 type: string
+ *               targetValue:
+ *                 type: number
+ *               actualValue:
+ *                 type: number
+ *               period:
+ *                 type: string
+ *                 description: Period in YYYY-MM format
+ *               weightage:
+ *                 type: number
+ *                 minimum: 0
+ *                 maximum: 100
+ *               jobDescRef:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: KPI metric recorded successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/kpi/metrics',
   authenticate,
@@ -571,8 +820,45 @@ router.get('/kpi/summary/:employeeId/:period',
 // ============================================================================
 
 /**
- * Submit leave request
- * POST /api/v1/hr/leave/requests
+ * @swagger
+ * /hr/leave/requests:
+ *   post:
+ *     summary: Submit leave request
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - leaveType
+ *               - fromDate
+ *               - toDate
+ *               - reason
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               leaveType:
+ *                 type: string
+ *                 enum: [CASUAL, SICK, EARNED, MATERNITY, PATERNITY, COMPENSATORY]
+ *               fromDate:
+ *                 type: string
+ *                 format: date
+ *               toDate:
+ *                 type: string
+ *                 format: date
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Leave request submitted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/leave/requests',
   authenticate,
@@ -599,8 +885,39 @@ router.post('/leave/requests',
 );
 
 /**
- * Process leave request (approve/reject)
- * PUT /api/v1/hr/leave/requests/:id/process
+ * @swagger
+ * /hr/leave/requests/{id}/process:
+ *   put:
+ *     summary: Process leave request (approve/reject)
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [APPROVED, REJECTED]
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Leave request processed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/leave/requests/:id/process',
   authenticate,
@@ -685,8 +1002,47 @@ router.get('/leave/balance/:employeeId/:year',
 // ============================================================================
 
 /**
- * Create performance review
- * POST /api/v1/hr/performance/reviews
+ * @swagger
+ * /hr/performance/reviews:
+ *   post:
+ *     summary: Create performance review
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - reviewPeriod
+ *               - reviewType
+ *               - reviewerIds
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               reviewPeriod:
+ *                 type: string
+ *               reviewType:
+ *                 type: string
+ *                 enum: [ANNUAL, QUARTERLY, PROBATION, PROMOTION]
+ *               reviewerIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               goals:
+ *                 type: string
+ *               developmentPlan:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Performance review created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/performance/reviews',
   authenticate,
@@ -884,8 +1240,53 @@ router.get('/performance/history/:employeeId',
 );
 
 /**
- * Process promotion
- * POST /api/v1/hr/performance/promotions
+ * @swagger
+ * /hr/performance/promotions:
+ *   post:
+ *     summary: Process promotion
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - toDesignation
+ *               - toSalary
+ *               - salaryIncrease
+ *               - effectiveDate
+ *               - reason
+ *               - approvedBy
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *                 format: uuid
+ *               reviewId:
+ *                 type: string
+ *                 format: uuid
+ *               toDesignation:
+ *                 type: string
+ *               toSalary:
+ *                 type: number
+ *               salaryIncrease:
+ *                 type: number
+ *               effectiveDate:
+ *                 type: string
+ *                 format: date
+ *               reason:
+ *                 type: string
+ *               approvedBy:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Promotion processed successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/performance/promotions',
   authenticate,
@@ -940,8 +1341,24 @@ router.post('/performance/incentives',
 );
 
 /**
- * Get organizational hierarchy
- * GET /api/v1/hr/organization/hierarchy
+ * @swagger
+ * /hr/organization/hierarchy:
+ *   get:
+ *     summary: Get organizational hierarchy
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Organizational hierarchy retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/organization/hierarchy',
   authenticate,
@@ -1020,8 +1437,43 @@ router.put('/organization/hierarchy/:employeeId',
 // ============================================================================
 
 /**
- * Create training program
- * POST /api/v1/hr/training/programs
+ * @swagger
+ * /hr/training/programs:
+ *   post:
+ *     summary: Create training program
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - category
+ *               - duration
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               duration:
+ *                 type: number
+ *               provider:
+ *                 type: string
+ *               cost:
+ *                 type: number
+ *               maxParticipants:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Training program created successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/training/programs',
   authenticate,
@@ -1150,8 +1602,32 @@ router.get('/training/history/:employeeId',
 );
 
 /**
- * Get performance analytics
- * GET /api/v1/hr/performance/analytics
+ * @swagger
+ * /hr/performance/analytics:
+ *   get:
+ *     summary: Get performance analytics
+ *     tags: [HR]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: department
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Performance analytics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/performance/analytics',
   authenticate,

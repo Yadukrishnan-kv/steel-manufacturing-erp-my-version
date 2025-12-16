@@ -43,7 +43,68 @@ const changePasswordSchema = {
 };
 
 /**
- * Register new user
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, username, password, firstName, lastName]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *                 example: johndoe
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: SecurePass123!
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               phone:
+ *                 type: string
+ *                 example: +91-9876543210
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User registered successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Validation error or weak password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: User already exists
  */
 router.post('/register', validate(registerSchema), asyncHandler(async (req: Request, res: Response) => {
   const { email, username, password, firstName, lastName, phone } = req.body;
@@ -117,7 +178,31 @@ router.post('/register', validate(registerSchema), asyncHandler(async (req: Requ
 }));
 
 /**
- * Login user
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user and get access token
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', validate(loginSchema), asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -201,7 +286,45 @@ router.post('/login', validate(loginSchema), asyncHandler(async (req: Request, r
 }));
 
 /**
- * Refresh access token
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: The refresh token received during login
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     tokens:
+ *                       type: object
+ *                       properties:
+ *                         accessToken:
+ *                           type: string
+ *                         refreshToken:
+ *                           type: string
+ *       401:
+ *         description: Invalid or expired refresh token
  */
 router.post('/refresh', validate(refreshTokenSchema), asyncHandler(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
@@ -267,7 +390,29 @@ router.post('/refresh', validate(refreshTokenSchema), asyncHandler(async (req: R
 }));
 
 /**
- * Logout user
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user and invalidate session
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Logout successful
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/logout', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const sessionId = req.user!.sessionId;
@@ -289,7 +434,32 @@ router.post('/logout', authenticate, asyncHandler(async (req: Request, res: Resp
 }));
 
 /**
- * Get current user profile
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current authenticated user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/me', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
@@ -327,7 +497,46 @@ router.get('/me', authenticate, asyncHandler(async (req: Request, res: Response)
 }));
 
 /**
- * Change password
+ * @swagger
+ * /auth/change-password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Password changed successfully
+ *       400:
+ *         description: Invalid current password or weak new password
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/change-password', authenticate, validate(changePasswordSchema), asyncHandler(async (req: Request, res: Response) => {
   const { currentPassword, newPassword } = req.body;

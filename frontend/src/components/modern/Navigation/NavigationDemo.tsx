@@ -284,7 +284,6 @@ export const NavigationDemo: React.FC = () => {
 
       {/* App Bar */}
       <ModernAppBar
-        title="SteelForge Manufacturing ERP"
         breadcrumbs={mockBreadcrumbs}
         user={mockUser}
         sidebarWidth={280}

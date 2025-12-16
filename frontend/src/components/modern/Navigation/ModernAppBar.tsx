@@ -254,7 +254,7 @@ export interface ModernAppBarProps {
  * essential navigation and user actions.
  */
 export const ModernAppBar: React.FC<ModernAppBarProps> = ({
-  title = 'SteelForge Manufacturing ERP',
+  title = '',
   breadcrumbs = [],
   user,
   sidebarWidth = 280,
