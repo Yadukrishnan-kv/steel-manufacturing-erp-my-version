@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared/shared.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize shared dependency injection
+  await setupDependencyInjection();
+  
   runApp(const QCApp());
 }
 
@@ -10,13 +16,18 @@ class QCApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Steel ERP - QC',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>()..add(AuthCheckRequested()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Steel ERP - QC',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        home: const QCHomePage(),
       ),
-      home: const QCHomePage(),
     );
   }
 }
@@ -28,20 +39,26 @@ class QCHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Steel ERP - Quality Control'),
+        title: const Text('Quality Control'),
       ),
       body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: [
+            Icon(
+              Icons.verified,
+              size: 100,
+              color: Colors.green,
+            ),
+            SizedBox(height: 20),
             Text(
-              'Quality Control Mobile App',
+              'Steel Manufacturing ERP',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 10),
             Text(
-              'QC inspection checklists and photo documentation features will be implemented here.',
+              'Quality Control Application',
+              style: TextStyle(fontSize: 18),
             ),
           ],
         ),

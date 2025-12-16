@@ -3,11 +3,6 @@
 ## Phase 1: Foundation and Core Infrastructure
 
 - [x] 1. Set up project structure and development environment
-
-
-
-
-
   - Create monorepo structure with backend, frontend, and mobile directories
   - Configure TypeScript, ESLint, Prettier for consistent code quality
   - Set up Docker containers for PostgreSQL
@@ -17,11 +12,6 @@
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 20.1, 20.4_
 
 - [x] 2. Implement core backend infrastructure
-
-
-
-
-
   - Set up Express.js server with TypeScript configuration
   - Configure PostgreSQL connection with Prisma ORM
   - Implement JWT-based authentication with bcrypt password hashing
@@ -39,12 +29,6 @@
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
 - [x] 3. Create comprehensive database schema and data models
-
-
-
-
-
-
   - Define Prisma schema for all core entities with multi-branch support
   - Implement multi-level BOM structure with revision control and engineering change management
   - Create rack/bin location mapping and barcode tracking schema
@@ -60,11 +44,6 @@
   - **Validates: Requirements 3.3**
 
 - [x] 4. Implement Role-Based Access Control (RBAC) system
-
-
-
-
-
   - Create predefined roles (Super Admin, Branch Manager, Production Manager, etc.)
   - Implement permission matrix with module-level and action-level access control
   - Build branch and department-level access restrictions
@@ -83,11 +62,6 @@
 ## Phase 2: Manufacturing and Production Management
 
 - [x] 5. Implement Manufacturing Service core functionality
-
-
-
-
-
   - Create production order management with automatic generation from sales orders
   - Implement multi-level BOM management with revision control and engineering change management
   - Build capacity-based production scheduling for cutting, CNC, bending, welding, coating, assembly operations
@@ -114,11 +88,6 @@
   - **Validates: Requirements 1.5**
 
 - [x] 6. Implement production scheduling and visualization APIs
-
-
-
-
-
   - Create scheduling algorithms considering machine and operator availability
   - Implement buffer day calculations and lead time management
   - Build APIs for Gantt chart and calendar visualization data
@@ -137,11 +106,6 @@
 ## Phase 3: Inventory and Warehouse Management
 
 - [x] 7. Implement Inventory Service core functionality
-
-
-
-
-
   - Create multi-warehouse inventory management APIs with branch support
   - Implement rack/bin location assignment and tracking system
   - Build barcode/QR code generation and scanning support
@@ -168,11 +132,6 @@
   - **Validates: Requirements 3.5**
 
 - [x] 8. Implement stock movement and transaction management
-
-
-
-
-
   - Create stock transaction recording with complete audit trails
   - Implement order-wise material allocation and reservation system
   - Build stock transfer workflows between warehouses and branches
@@ -188,11 +147,6 @@
 ## Phase 4: Procurement and Supplier Management
 
 - [x] 9. Implement Procurement Service functionality
-
-
-
-
-
   - Create automatic purchase requisition generation from stock-outs and material validation
   - Implement RFQ (Request for Quotation) management system with vendor comparison
   - Build supplier evaluation and rating system based on delivery, quality, and pricing
@@ -218,11 +172,6 @@
   - **Validates: Requirements 2.4**
 
 - [x] 10. Implement supplier management and vendor evaluation
-
-
-
-
-
   - Create supplier master data management with contact and banking details
   - Implement vendor performance tracking and rating algorithms
   - Build supplier quote comparison and analysis tools
@@ -241,11 +190,6 @@
 ## Phase 5: Sales and Customer Management
 
 - [x] 11. Implement Sales Service core functionality
-
-
-
-
-
   - Create lead management system with CRM capabilities
   - Implement geo-tagged site measurement capture with photo documentation
   - Build comprehensive estimation engine with size, coating type, hardware specifications, and labor calculations
@@ -276,10 +220,6 @@
   - **Validates: Requirements 4.5**
 
 - [x] 12. Implement external integrations for lead capture and communication
-
-
-
-
   - Integrate with Meta Business API for Facebook/Instagram lead capture with source tracking
   - Integrate with Google Ads API for Google advertising leads with attribution
   - Implement WhatsApp Cloud API for automated customer notifications and order updates
@@ -298,11 +238,6 @@
 ## Phase 6: Quality Control System
 
 - [x] 13. Implement Quality Control Service
-
-
-
-
-
   - Create multi-stage QC checkpoint management (cutting, fabrication, coating, assembly, dispatch, installation)
   - Implement QC checklist management with photo and scoring capabilities
   - Build rework job card generation for failed QC inspections
@@ -333,11 +268,6 @@
   - **Validates: Requirements 5.5**
 
 - [x] 14. Implement QC workflow and inspection management
-
-
-
-
-
   - Create QC scoring algorithms and pass/fail criteria
   - Build QC certificate generation and customer approval workflows
   - Implement QC integration with production and delivery processes
@@ -355,11 +285,6 @@
 ## Phase 7: Service and Installation Management
 
 - [x] 15. Implement Service Management Service
-
-
-
-
-
   - Create service request booking and automatic technician assignment based on location and expertise
   - Implement AMC (Annual Maintenance Contract) management and tracking with renewal alerts
   - Build warranty and guarantee tracking with expiry management
@@ -377,11 +302,6 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [x] 16. Implement service costing and parts management
-
-
-
-
-
   - Create service cost calculation with parts and labor tracking
   - Implement service parts inventory management and consumption
   - Build service billing and invoice generation
@@ -399,11 +319,6 @@
 ## Phase 8: Finance and Accounting
 
 - [x] 17. Implement Finance Service core functionality
-
-
-
-
-
   - Create accounts receivable and payable management
   - Implement GST, TDS, and statutory tax calculations with compliance
   - Build branch-wise and consolidated P&L reporting
@@ -421,16 +336,6 @@
   - _Requirements: 7.1, 7.2, 7.3, 7.5_
 
 - [x] 18. Implement invoice and payment management
-
-
-
-
-
-
-
-
-
-
   - Create automated invoice generation from sales orders and services
   - Implement payment processing and reconciliation
   - Build credit management and customer payment tracking
@@ -449,11 +354,6 @@
 ## Phase 9: HR and Payroll Management
 
 - [x] 19. Implement HR Service functionality
-
-
-
-
-
   - Create biometric attendance integration with Hikvision systems
   - Implement shift management, overtime, and early-out tracking
   - Build payroll processing with PF, ESI, and professional tax automation
@@ -471,11 +371,6 @@
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 19.1, 19.2_
 
 - [x] 20. Implement performance management and appraisal system
-
-
-
-
-
   - Create KPI-based performance evaluation system
   - Implement appraisal workflows and promotion criteria
   - Build incentive calculation based on performance metrics
@@ -494,11 +389,6 @@
 ## Phase 10: Alerts and SLA Management
 
 - [x] 21. Implement Alert and SLA Management Service
-
-
-
-
-
   - Create SLA-based alert system for leads, tasks, QC, service, and production
   - Implement escalation hierarchy (Employee → TL → Manager → GM)
   - Build multi-channel alert delivery (Email, App, WhatsApp, SMS)
@@ -518,16 +408,6 @@
 ## Phase 11: Business Intelligence and Dashboards
 
 - [x] 22. Implement BI and Dashboard Service
-
-
-
-
-
-
-
-
-
-
   - Create role-based dashboard system for production, sales, finance, HR, and service
   - Implement trend analysis and forecasting capabilities
   - Build Power BI-style drill-down reporting functionality
@@ -547,11 +427,6 @@
 ## Phase 12: Customer Portal and Employee Self-Service Portal
 
 - [x] 23. Implement Customer Portal as separate web application
-
-
-
-
-
   - Create customer authentication and secure login system
   - Build real-time order tracking with production progress visualization
   - Implement service request booking and technician tracking
@@ -569,11 +444,6 @@
   - _Requirements: 11.1, 11.3, 11.4, 11.5_
 
 - [x] 24. Implement Employee Self-Service Portal
-
-
-
-
-
   - Create employee authentication and personal dashboard
   - Build employee profile management with document upload
   - Implement attendance history and overtime tracking display
@@ -604,11 +474,6 @@
 ## Phase 13: React Web Application
 
 - [x] 25. Set up React frontend project structure
-
-
-
-
-
   - Initialize React project with TypeScript and Material-UI or Ant Design
   - Configure routing with React Router v6
   - Set up Redux Toolkit with RTK Query for state management
@@ -624,11 +489,6 @@
   - _Requirements: 12.1, 12.5_
 
 - [x] 26. Implement core business module interfaces
-
-
-
-
-
   - Create manufacturing dashboard with Gantt chart visualization using Recharts
   - Build inventory management interface with barcode scanning support
   - Implement sales order management and estimation interfaces
@@ -645,11 +505,6 @@
   - _Requirements: 1.2, 3.1, 4.3, 5.1_
 
 - [x] 27. Implement advanced frontend features and dashboards
-
-
-
-
-
   - Build finance and accounting dashboards with charts and reports
   - Implement HR management and payroll interfaces with KPI tracking
   - Create BI dashboards with Power BI-style drill-down capabilities
@@ -667,7 +522,7 @@
 
 ## Phase 14: Flutter Mobile Applications
 
-- [ ] 28. Set up Flutter project structure for all mobile apps
+- [x] 28. Set up Flutter project structure for all mobile apps
   - Initialize Flutter projects for Sales, QC, Service, Store, and Production apps
   - Configure shared packages and common utilities
   - Set up state management with Bloc/Cubit or Riverpod
@@ -682,7 +537,7 @@
   - Test shared utilities and common components
   - _Requirements: 12.5, 14.4_
 
-- [ ] 29. Implement Sales Mobile App
+- [x] 29. Implement Sales Mobile App
   - Create lead capture interface with external API integration
   - Implement geo-tagged site measurement with photo capture
   - Build estimation calculator with offline capability
@@ -755,9 +610,12 @@
   - Test offline data collection and sync
   - _Requirements: 1.1, 13.1, 13.5_
 
+- [ ] 34. Checkpoint - Ensure all mobile apps are functional
+  - Ensure all tests pass, ask the user if questions arise.
+
 ## Phase 15: Integration and System Testing
 
-- [ ] 34. Implement comprehensive system integration
+- [ ] 35. Implement comprehensive system integration
   - Integrate all modules with direct function calls and shared database
   - Implement end-to-end workflows from sales order to delivery
   - Create data synchronization between web and mobile applications
@@ -766,14 +624,17 @@
   - Build system health monitoring and alerting
   - _Requirements: All requirements_
 
-- [ ]* 34.1 Write end-to-end integration tests
+- [ ]* 35.1 Write end-to-end integration tests
   - Test complete order-to-delivery workflow
   - Test service request to completion workflow
   - Test procurement to goods receipt workflow
   - Test multi-branch operations and data synchronization
+  - _Requirements: 1.1, 4.5, 6.1, 2.4, 21.1, 21.2_est to completion workflow
+  - Test procurement to goods receipt workflow
+  - Test multi-branch operations and data synchronization
   - _Requirements: 1.1, 4.5, 6.1, 2.4, 21.1, 21.2_
 
-- [ ] 35. Implement comprehensive security and compliance features
+- [ ] 36. Implement comprehensive security and compliance features
   - Implement data encryption for data at rest and in transit
   - Set up comprehensive audit trails for all transactions and changes
   - Implement automated data backup with disaster recovery capabilities
@@ -782,14 +643,14 @@
   - Build security dashboard and monitoring tools
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 20.3_
 
-- [ ]* 35.1 Write comprehensive security tests
+- [ ]* 36.1 Write comprehensive security tests
   - Test data encryption and security measures
   - Test audit trail completeness and accuracy
   - Test backup and disaster recovery procedures
   - Test security monitoring and intrusion detection
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 36. Final system testing and optimization
+- [ ] 37. Final system testing and optimization
   - Perform load testing and performance optimization
   - Conduct comprehensive security testing and vulnerability assessment
   - Test all external API integrations (Meta, Google, WhatsApp, Hikvision)
@@ -797,7 +658,7 @@
   - Ensure all tests pass, ask the user if questions arise
   - _Requirements: 12.3, 12.4, 20.2, 20.3_
 
-- [ ]* 36.1 Write performance and load tests
+- [ ]* 37.1 Write performance and load tests
   - Test system performance under load
   - Test scalability and optimization measures
   - Test external API integration reliability
@@ -806,7 +667,7 @@
 
 ## Phase 16: Deployment and Documentation
 
-- [ ] 37. Prepare production deployment and infrastructure
+- [ ] 38. Prepare production deployment and infrastructure
   - Set up production infrastructure with Docker containers
   - Configure CI/CD pipelines for automated deployment
   - Implement production monitoring and alerting systems
@@ -816,14 +677,14 @@
   - Configure load balancer and SSL certificates
   - _Requirements: 12.3, 12.4, 20.1, 20.3_
 
-- [ ]* 37.1 Write deployment and infrastructure tests
+- [ ]* 38.1 Write deployment and infrastructure tests
   - Test deployment scripts and configuration
   - Test monitoring and alerting systems
   - Test load balancer and SSL configuration
   - Test backup and recovery procedures
   - _Requirements: 12.3, 12.4, 20.1_
 
-- [ ] 38. Create comprehensive documentation and training materials
+- [ ] 39. Create comprehensive documentation and training materials
   - Create user manuals for all modules and roles
   - Build API documentation with examples
   - Create system administration guide
@@ -832,7 +693,7 @@
   - Build video tutorials for key workflows
   - _Requirements: All requirements_
 
-- [ ] 39. Final system validation and go-live preparation
+- [ ] 40. Final system validation and go-live preparation
   - Conduct user acceptance testing with stakeholders
   - Perform final security audit and penetration testing
   - Execute data migration from existing systems (if any)

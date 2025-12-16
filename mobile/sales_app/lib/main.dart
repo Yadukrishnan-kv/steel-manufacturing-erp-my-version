@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared/shared.dart';
+import 'package:go_router/go_router.dart';
+import 'services/offline_storage_service.dart';
+import 'services/sales_api_service.dart';
+import 'services/sync_service.dart';
+import 'services/location_service.dart';
+import 'features/auth/presentation/login_screen.dart';
+import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/leads/bloc/leads_bloc.dart';
+import 'features/measurements/bloc/measurements_bloc.dart';
+import 'features/estimates/bloc/estimates_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,49 +19,116 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
   
-  runApp(const SalesApp());
+  // Initialize offline storage
+  final offlineStorage = OfflineStorageService();
+  await offlineStorage.init();
+  
+  // Initialize shared dependency injection
+  await setupDependencyInjection();
+  
+  runApp(SalesApp(offlineStorage: offlineStorage));
 }
 
-class SalesApp extends StatelessWidget {
-  const SalesApp({super.key});
+class SalesApp extends StatefulWidget {
+  final OfflineStorageService offlineStorage;
+
+  const SalesApp({super.key, required this.offlineStorage});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Steel ERP - Sales',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const SalesHomePage(),
+  State<SalesApp> createState() => _SalesAppState();
+}
+
+class _SalesAppState extends State<SalesApp> {
+  late final GoRouter _router;
+  late final SalesApiService _apiService;
+  late final SalesSyncService _syncService;
+  late final LocationService _locationService;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize services
+    _apiService = SalesApiService(getIt<ApiClient>());
+    _syncService = SalesSyncService();
+    _locationService = LocationService();
+    
+    // Initialize sync service
+    _syncService.init(_apiService);
+    
+    // Setup router
+    _router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              if (authState is AuthAuthenticated) {
+                return const DashboardScreen();
+              } else if (authState is AuthUnauthenticated) {
+                return const LoginScreen();
+              } else {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+            },
+          ),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+      ],
     );
   }
-}
 
-class SalesHomePage extends StatelessWidget {
-  const SalesHomePage({super.key});
+  @override
+  void dispose() {
+    _syncService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Steel ERP - Sales'),
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Sales Mobile App',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Lead capture, site measurement, and estimation features will be implemented here.',
-            ),
-          ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>()..add(AuthCheckRequested()),
         ),
+        BlocProvider<LeadsBloc>(
+          create: (context) => LeadsBloc(
+            offlineStorage: widget.offlineStorage,
+            apiService: _apiService,
+            syncService: _syncService,
+          ),
+        ),
+        BlocProvider<MeasurementsBloc>(
+          create: (context) => MeasurementsBloc(
+            offlineStorage: widget.offlineStorage,
+            apiService: _apiService,
+            syncService: _syncService,
+            locationService: _locationService,
+          ),
+        ),
+        BlocProvider<EstimatesBloc>(
+          create: (context) => EstimatesBloc(
+            offlineStorage: widget.offlineStorage,
+            apiService: _apiService,
+            syncService: _syncService,
+          ),
+        ),
+      ],
+      child: MaterialApp.router(
+        title: 'Steel ERP - Sales',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        routerConfig: _router,
       ),
     );
   }
