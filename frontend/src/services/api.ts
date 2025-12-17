@@ -151,6 +151,20 @@ export const api = createApi({
     }),
     
     // BOM Management
+    // Products for BOM creation
+    getProducts: builder.query<any[], void>({
+      query: () => '/manufacturing/products',
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['BOM'],
+    }),
+
+    // Inventory items for BOM items
+    getInventoryItemsForBOM: builder.query<any[], void>({
+      query: () => '/manufacturing/inventory-items',
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['BOM'],
+    }),
+
     getBOMs: builder.query<any, { status?: string; page?: number; limit?: number; search?: string }>({
       query: (params = {}) => ({
         url: '/manufacturing/boms',
@@ -764,6 +778,8 @@ export const {
   useGetGanttChartDataQuery,
   useGetCalendarViewDataQuery,
   useCreateProductionOrderMutation,
+  useGetProductsQuery,
+  useGetInventoryItemsForBOMQuery,
   useGetBOMsQuery,
   useGetBOMQuery,
   useCreateBOMMutation,
