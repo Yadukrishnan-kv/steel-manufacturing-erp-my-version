@@ -92,8 +92,11 @@ class SyncService {
   Future<void> _removeOfflineEntry(String key) async {
     final offlineData = await _storageService.getOfflineData();
     offlineData.remove(key);
-    final dataJson = jsonEncode(offlineData);
-    await _storageService._prefs.setString('offline_data', dataJson);
+    // Save the updated offline data back
+    await _storageService.clearOfflineData();
+    for (final entry in offlineData.entries) {
+      await _storageService.saveOfflineData(entry.key, entry.value);
+    }
   }
 
   Future<void> addOfflineOperation({

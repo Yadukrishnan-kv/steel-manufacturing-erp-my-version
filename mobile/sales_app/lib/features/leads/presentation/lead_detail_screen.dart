@@ -6,6 +6,8 @@ import '../../../models/estimate.dart';
 import '../../../models/customer_interaction.dart';
 import '../../measurements/presentation/measurement_form_screen.dart';
 import '../../estimates/presentation/estimate_form_screen.dart';
+import '../../interactions/presentation/interactions_screen.dart';
+import '../../interactions/presentation/interaction_form_screen.dart';
 import 'lead_form_screen.dart';
 
 class LeadDetailScreen extends StatefulWidget {
@@ -263,19 +265,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen>
   }
 
   Widget _buildInteractionsTab() {
-    // In a real app, this would load interactions from the bloc
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('No interactions found'),
-          SizedBox(height: 8),
-          Text('Tap the + button to log an interaction'),
-        ],
-      ),
-    );
+    return InteractionsScreen(leadId: widget.lead.id);
   }
 
   Widget _buildFloatingActionButton() {
@@ -325,7 +315,15 @@ class _LeadDetailScreenState extends State<LeadDetailScreen>
               title: const Text('Log Phone Call'),
               onTap: () {
                 Navigator.pop(context);
-                _logInteraction('CALL');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InteractionFormScreen(
+                      lead: widget.lead,
+                      interactionType: 'CALL',
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -333,7 +331,15 @@ class _LeadDetailScreenState extends State<LeadDetailScreen>
               title: const Text('Log Meeting'),
               onTap: () {
                 Navigator.pop(context);
-                _logInteraction('MEETING');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InteractionFormScreen(
+                      lead: widget.lead,
+                      interactionType: 'MEETING',
+                    ),
+                  ),
+                );
               },
             ),
           ],

@@ -12,6 +12,7 @@ import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'features/leads/bloc/leads_bloc.dart';
 import 'features/measurements/bloc/measurements_bloc.dart';
 import 'features/estimates/bloc/estimates_bloc.dart';
+import 'features/interactions/bloc/interactions_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -118,6 +119,13 @@ class _SalesAppState extends State<SalesApp> {
         ),
         BlocProvider<EstimatesBloc>(
           create: (context) => EstimatesBloc(
+            offlineStorage: widget.offlineStorage,
+            apiService: _apiService,
+            syncService: _syncService,
+          ),
+        ),
+        BlocProvider<InteractionsBloc>(
+          create: (context) => InteractionsBloc(
             offlineStorage: widget.offlineStorage,
             apiService: _apiService,
             syncService: _syncService,

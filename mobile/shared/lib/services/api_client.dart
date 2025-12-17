@@ -21,23 +21,23 @@ abstract class ApiClient {
 
   // Generic GET request
   @GET('{path}')
-  Future<ApiResponse<Map<String, dynamic>>> get(@Path() String path);
+  Future<Response<dynamic>> get(@Path() String path);
 
   // Generic POST request
   @POST('{path}')
-  Future<ApiResponse<Map<String, dynamic>>> post(
+  Future<Response<dynamic>> post(
     @Path() String path,
     @Body() Map<String, dynamic> data,
   );
 
   // Generic PUT request
   @PUT('{path}')
-  Future<ApiResponse<Map<String, dynamic>>> put(
+  Future<Response<dynamic>> put(
     @Path() String path,
     @Body() Map<String, dynamic> data,
   );
 
   // Generic DELETE request
   @DELETE('{path}')
-  Future<Map<String, dynamic>> delete(@Path() String path);
+  Future<Response<dynamic>> delete(@Path() String path);
 }
