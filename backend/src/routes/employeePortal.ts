@@ -210,8 +210,37 @@ router.get('/profile',
 );
 
 /**
- * Update employee profile
- * PUT /api/v1/employee-portal/profile
+ * @swagger
+ * /employee-portal/profile:
+ *   put:
+ *     summary: Update employee profile
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/profile',
   authenticate,
@@ -481,8 +510,29 @@ router.post('/leave/requests',
 );
 
 /**
- * Get leave requests history
- * GET /api/v1/employee-portal/leave/requests
+ * @swagger
+ * /employee-portal/leave/requests:
+ *   get:
+ *     summary: Get leave requests history
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Leave requests retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leave/requests',
   authenticate,
@@ -784,8 +834,27 @@ router.get('/kpi/metrics',
 );
 
 /**
- * Get performance review for self-assessment
- * GET /api/v1/employee-portal/performance/reviews/:reviewId
+ * @swagger
+ * /employee-portal/performance/reviews/{reviewId}:
+ *   get:
+ *     summary: Get performance review for self-assessment
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: reviewId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Performance review retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/performance/reviews/:reviewId',
   authenticate,
@@ -832,8 +901,41 @@ router.get('/performance/reviews/:reviewId',
 );
 
 /**
- * Submit self-assessment
- * POST /api/v1/employee-portal/performance/self-assessment
+ * @swagger
+ * /employee-portal/performance/self-assessment:
+ *   post:
+ *     summary: Submit self-assessment
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reviewId, responses, selfRatings]
+ *             properties:
+ *               reviewId:
+ *                 type: string
+ *                 format: uuid
+ *               responses:
+ *                 type: object
+ *               selfRatings:
+ *                 type: object
+ *                 additionalProperties:
+ *                   type: number
+ *                   minimum: 1
+ *                   maximum: 5
+ *               comments:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Self-assessment submitted successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/performance/self-assessment',
   authenticate,
@@ -875,8 +977,24 @@ router.post('/performance/self-assessment',
 );
 
 /**
- * Get performance history
- * GET /api/v1/employee-portal/performance/history
+ * @swagger
+ * /employee-portal/performance/history:
+ *   get:
+ *     summary: Get performance history
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *     responses:
+ *       200:
+ *         description: Performance history retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/performance/history',
   authenticate,
@@ -988,8 +1106,27 @@ router.get('/notifications',
 );
 
 /**
- * Mark notification as read
- * POST /api/v1/employee-portal/notifications/:id/read
+ * @swagger
+ * /employee-portal/notifications/{id}/read:
+ *   post:
+ *     summary: Mark notification as read
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Notification marked as read successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/notifications/:id/read',
   authenticate,
@@ -1037,8 +1174,53 @@ router.post('/notifications/:id/read',
 );
 
 /**
- * Create employee notification (Admin/HR only)
- * POST /api/v1/employee-portal/notifications
+ * @swagger
+ * /employee-portal/notifications:
+ *   post:
+ *     summary: Create employee notification (Admin/HR only)
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, message]
+ *             properties:
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [INFO, WARNING, SUCCESS, ERROR]
+ *                 default: INFO
+ *               targetEmployees:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               targetDepartments:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               targetBranches:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               expiresAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Notification created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/notifications',
   authenticate,
@@ -1203,8 +1385,33 @@ router.get('/organization/chart',
 // ============================================================================
 
 /**
- * Upload employee document
- * POST /api/v1/employee-portal/documents/upload
+ * @swagger
+ * /employee-portal/documents/upload:
+ *   post:
+ *     summary: Upload employee document
+ *     tags: [Employee Portal]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [document, documentType]
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *               documentType:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/documents/upload',
   authenticate,

@@ -50,6 +50,8 @@ import {
   useUpdateBranchMutation,
   useDeleteBranchMutation,
 } from '../../services/api';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
 
 // Validation schema
 const branchSchema = z.object({
@@ -92,6 +94,7 @@ interface Branch {
 
 const BranchManagement: React.FC = () => {
   const theme = useTheme();
+  const currentUser = useSelector((state: RootState) => state.auth.user);
   const [page, setPage] = useState(0); // TablePagination uses 0-based indexing
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [search, setSearch] = useState('');
@@ -209,7 +212,44 @@ const BranchManagement: React.FC = () => {
         setBranchToDelete(null);
         refetch();
       } catch (error) {
-        console.error('Failed to delete branch:', error);
+        console.error('Failed to delete branch - Full error object:', error);
+        console.error('Error data:', (error as any)?.data);
+        console.error('Error status:', (error as any)?.status);
+        console.error('Error data.error:', (error as any)?.data?.error);
+        console.error('Error data.error.code:', (error as any)?.data?.error?.code);
+        console.error('Error data.error.message:', (error as any)?.data?.error?.message);
+        
+        // Temporary: Show raw error data for debugging
+        alert(`Raw error data: ${JSON.stringify((error as any)?.data, null, 2)}`);
+        
+        // Extract detailed error message
+        let errorMessage = 'Unknown error occurred';
+        let errorCode = '';
+        
+        if ((error as any)?.data?.error?.message) {
+          errorMessage = (error as any).data.error.message;
+          errorCode = (error as any).data.error.code || '';
+        } else if ((error as any)?.data?.message) {
+          errorMessage = (error as any).data.message;
+        } else if ((error as any)?.message) {
+          errorMessage = (error as any).message;
+        } else if ((error as any)?.status) {
+          errorMessage = `HTTP Error ${(error as any).status}`;
+        }
+        
+        // Show user-friendly error message based on error code
+        if (errorCode === 'BRANCH_HAS_DEPENDENCIES') {
+          alert(`Cannot delete branch: ${errorMessage}\n\nThe branch has been deactivated instead of deleted because it has related data.`);
+        } else {
+          alert(`Failed to delete branch: ${errorMessage}\n\nPlease check the console for more details.`);
+        }
+        
+        // Refresh the data to show updated status
+        refetch();
+        
+        // Close the dialog
+        setDeleteConfirmOpen(false);
+        setBranchToDelete(null);
       }
     }
   };
@@ -290,6 +330,13 @@ const BranchManagement: React.FC = () => {
       width: '100%',
       boxSizing: 'border-box'
     }}>
+      {/* Debug Info - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <Alert severity="info" sx={{ mb: 1, fontSize: '0.75rem' }}>
+          Debug: Current user role: {currentUser?.role || 'Not logged in'} | Required roles: SUPER_ADMIN, BRANCH_MANAGER
+        </Alert>
+      )}
+
       {/* Header Section */}
       <Box sx={{
         display: 'flex',
@@ -720,15 +767,22 @@ const BranchManagement: React.FC = () => {
                           <EditIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteClick(branch)}
-                          sx={{ p: 0.5 }}
-                        >
-                          <DeleteIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
+                      <Tooltip title={
+                        !currentUser || !['SUPER_ADMIN', 'BRANCH_MANAGER'].includes(currentUser.role) 
+                          ? 'Insufficient permissions' 
+                          : 'Delete'
+                      }>
+                        <span>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteClick(branch)}
+                            disabled={!currentUser || !['SUPER_ADMIN', 'BRANCH_MANAGER'].includes(currentUser.role)}
+                            sx={{ p: 0.5 }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                     </Box>
                   </TableCell>
@@ -1593,13 +1647,13 @@ const BranchManagement: React.FC = () => {
               color: '#d32f2f',
               mb: 0
             }}>
-              Confirm Delete
+              Delete/Deactivate Branch
             </Typography>
             <Typography variant="caption" sx={{
               color: 'text.secondary',
               fontSize: '0.7rem'
             }}>
-              This action cannot be undone
+              Branches with dependencies will be deactivated instead
             </Typography>
           </Box>
         </DialogTitle>
@@ -1643,11 +1697,35 @@ const BranchManagement: React.FC = () => {
           <Typography variant="body2" sx={{
             fontSize: '0.875rem',
             color: 'text.primary',
-            lineHeight: 1.4
+            lineHeight: 1.4,
+            mb: 1
           }}>
-            Are you sure you want to delete this branch? All associated data including warehouses, 
-            employees, and customer records will be affected. This action cannot be undone.
+            Are you sure you want to delete this branch?
           </Typography>
+          <Alert severity="warning" sx={{ fontSize: '0.75rem', mb: 1 }}>
+            <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+              <strong>Note:</strong> If this branch has employees, customers, or orders, 
+              it cannot be deleted and will be deactivated instead. This action cannot be undone.
+            </Typography>
+          </Alert>
+          {branchToDelete?._count && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{ 
+                fontSize: '0.75rem',
+                color: 'text.secondary',
+                display: 'block',
+                mb: 0.5
+              }}>
+                Current dependencies:
+              </Typography>
+              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                • {branchToDelete._count.employees || 0} employees
+                • {branchToDelete._count.customers || 0} customers
+                • {branchToDelete._count.salesOrders || 0} sales orders
+                • {branchToDelete._count.productionOrders || 0} production orders
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ 
           px: 2, 
@@ -1689,7 +1767,7 @@ const BranchManagement: React.FC = () => {
             {isDeleting ? (
               <CircularProgress size={16} sx={{ color: 'white' }} />
             ) : (
-              'Delete Branch'
+              'Delete/Deactivate Branch'
             )}
           </Button>
         </DialogActions>
