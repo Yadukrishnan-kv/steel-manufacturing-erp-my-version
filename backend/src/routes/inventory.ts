@@ -318,6 +318,29 @@ router.post('/locations/assign', authenticate, validate({ body: locationAssignme
   }
 });
 
+/**
+ * @swagger
+ * /inventory/locations/warehouse/{warehouseId}:
+ *   get:
+ *     summary: Get locations by warehouse
+ *     description: Get all rack/bin locations in a warehouse
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: warehouseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Warehouse ID
+ *     responses:
+ *       200:
+ *         description: List of locations
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/locations/warehouse/:warehouseId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { warehouseId } = req.params;
@@ -488,6 +511,29 @@ router.post('/batches', authenticate, validate({ body: batchRecordSchema }), asy
   }
 });
 
+/**
+ * @swagger
+ * /inventory/batches/item/{inventoryItemId}:
+ *   get:
+ *     summary: Get batches by item
+ *     description: Get all batches for a specific inventory item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: inventoryItemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Inventory item ID
+ *     responses:
+ *       200:
+ *         description: List of batches
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/batches/item/:inventoryItemId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { inventoryItemId } = req.params;
@@ -760,6 +806,21 @@ router.get('/alerts/low-stock', authenticate, async (req: Request, res: Response
   }
 });
 
+/**
+ * @swagger
+ * /inventory/alerts/generate-reorder:
+ *   post:
+ *     summary: Generate reorder alerts
+ *     description: Check inventory levels and generate reorder alerts
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reorder alerts generated successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/alerts/generate-reorder', authenticate, async (req: Request, res: Response) => {
   try {
     const alerts = await inventoryService.checkAndGenerateReorderAlerts();
@@ -781,6 +842,47 @@ router.post('/alerts/generate-reorder', authenticate, async (req: Request, res: 
 });
 
 // Order-wise material allocation APIs
+
+/**
+ * @swagger
+ * /inventory/allocate-order:
+ *   post:
+ *     summary: Allocate order materials
+ *     description: Allocate materials for a specific order
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [orderId, orderType, items]
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *               orderType:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Materials allocated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/allocate-order', authenticate, validate({ body: orderAllocationSchema }), async (req: Request, res: Response) => {
   try {
     const { orderId, orderType, items } = req.body;
@@ -870,6 +972,42 @@ router.post('/transfers', authenticate, validate({ body: stockTransferSchema }),
   }
 });
 
+/**
+ * @swagger
+ * /inventory/transfers/{transferId}/status:
+ *   put:
+ *     summary: Update transfer status
+ *     description: Update the status of a stock transfer
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transferId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Transfer ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, APPROVED, SHIPPED, RECEIVED, CANCELLED]
+ *     responses:
+ *       200:
+ *         description: Transfer status updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.put('/transfers/:transferId/status', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { transferId } = req.params;
@@ -972,6 +1110,50 @@ const reservationSchema = z.object({
   }))
 });
 
+/**
+ * @swagger
+ * /inventory/reserve-materials:
+ *   post:
+ *     summary: Reserve materials
+ *     description: Reserve materials for order with location details
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [orderId, orderType, items]
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *               orderType:
+ *                 type: string
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     quantity:
+ *                       type: number
+ *                     rackCode:
+ *                       type: string
+ *                     binCode:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Materials reserved successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/reserve-materials', authenticate, validate({ body: reservationSchema }), async (req: Request, res: Response) => {
   try {
     const { orderId, orderType, items } = req.body;
@@ -993,6 +1175,36 @@ router.post('/reserve-materials', authenticate, validate({ body: reservationSche
   }
 });
 
+/**
+ * @swagger
+ * /inventory/release-reservation:
+ *   post:
+ *     summary: Release material reservations
+ *     description: Release all material reservations for an order
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [orderId, orderType]
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *                 format: uuid
+ *               orderType:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reservations released successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/release-reservation', authenticate, async (req: Request, res: Response) => {
   try {
     const { orderId, orderType } = req.body;
@@ -1024,6 +1236,46 @@ const cycleCountSchema = z.object({
   }))
 });
 
+/**
+ * @swagger
+ * /inventory/cycle-count:
+ *   post:
+ *     summary: Perform cycle count
+ *     description: Perform cycle counting for inventory items
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [warehouseId, items]
+ *             properties:
+ *               warehouseId:
+ *                 type: string
+ *                 format: uuid
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     countedQuantity:
+ *                       type: number
+ *                     remarks:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Cycle count completed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/cycle-count', authenticate, validate({ body: cycleCountSchema }), async (req: Request, res: Response) => {
   try {
     const { warehouseId, items } = req.body;
@@ -1051,6 +1303,39 @@ const stockAdjustmentSchema = z.object({
   reason: z.string().min(1)
 });
 
+/**
+ * @swagger
+ * /inventory/stock-adjustment:
+ *   post:
+ *     summary: Perform stock adjustment
+ *     description: Adjust stock quantity for an inventory item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [inventoryItemId, newQuantity, reason]
+ *             properties:
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               newQuantity:
+ *                 type: number
+ *                 minimum: 0
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Stock adjustment completed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/stock-adjustment', authenticate, validate({ body: stockAdjustmentSchema }), async (req: Request, res: Response) => {
   try {
     const { inventoryItemId, newQuantity, reason } = req.body;
@@ -1091,6 +1376,55 @@ const goodsReceiptSchema = z.object({
   }))
 });
 
+/**
+ * @swagger
+ * /inventory/goods-receipt:
+ *   post:
+ *     summary: Process goods receipt
+ *     description: Process goods receipt with location assignment
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [grnNumber, items]
+ *             properties:
+ *               grnNumber:
+ *                 type: string
+ *               poId:
+ *                 type: string
+ *                 format: uuid
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     receivedQuantity:
+ *                       type: number
+ *                     batchNumber:
+ *                       type: string
+ *                     expiryDate:
+ *                       type: string
+ *                       format: date-time
+ *                     rackCode:
+ *                       type: string
+ *                     binCode:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Goods receipt processed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/goods-receipt', authenticate, validate({ body: goodsReceiptSchema }), async (req: Request, res: Response) => {
   try {
     const grnData = {
@@ -1133,6 +1467,50 @@ const putAwaySchema = z.object({
   quantity: z.number().positive()
 });
 
+/**
+ * @swagger
+ * /inventory/put-away:
+ *   post:
+ *     summary: Process put-away
+ *     description: Move inventory items from one location to another
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [inventoryItemId, fromLocation, toLocation, quantity]
+ *             properties:
+ *               inventoryItemId:
+ *                 type: string
+ *                 format: uuid
+ *               fromLocation:
+ *                 type: object
+ *                 properties:
+ *                   rackCode:
+ *                     type: string
+ *                   binCode:
+ *                     type: string
+ *               toLocation:
+ *                 type: object
+ *                 properties:
+ *                   rackCode:
+ *                     type: string
+ *                   binCode:
+ *                     type: string
+ *               quantity:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Put-away completed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/put-away', authenticate, validate({ body: putAwaySchema }), async (req: Request, res: Response) => {
   try {
     const putAwayData = {
@@ -1159,6 +1537,50 @@ router.post('/put-away', authenticate, validate({ body: putAwaySchema }), async 
 });
 
 // Enhanced stock transfer APIs
+
+/**
+ * @swagger
+ * /inventory/transfers/{transferId}/ship:
+ *   post:
+ *     summary: Ship stock transfer
+ *     description: Process shipment of stock transfer
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transferId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Transfer ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [shippedItems]
+ *             properties:
+ *               shippedItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     shippedQuantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Stock transfer shipped successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/transfers/:transferId/ship', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { transferId } = req.params;
@@ -1196,6 +1618,51 @@ router.post('/transfers/:transferId/ship', authenticate, async (req: Request, re
   }
 });
 
+/**
+ * @swagger
+ * /inventory/transfers/{transferId}/receive:
+ *   post:
+ *     summary: Receive stock transfer
+ *     description: Process receipt of stock transfer
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transferId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Transfer ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [receivedItems]
+ *             properties:
+ *               receivedItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventoryItemId:
+ *                       type: string
+ *                       format: uuid
+ *                     receivedQuantity:
+ *                       type: number
+ *                     condition:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Stock transfer received successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/transfers/:transferId/receive', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { transferId } = req.params;
@@ -1234,6 +1701,60 @@ router.post('/transfers/:transferId/receive', authenticate, async (req: Request,
 });
 
 // Stock inquiry and reporting APIs
+
+/**
+ * @swagger
+ * /inventory/inquiry:
+ *   get:
+ *     summary: Stock inquiry
+ *     description: Get comprehensive stock inquiry with filtering
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: itemCode
+ *         schema:
+ *           type: string
+ *         description: Filter by item code
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: warehouseId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by warehouse
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: lowStock
+ *         schema:
+ *           type: boolean
+ *         description: Filter low stock items
+ *       - in: query
+ *         name: expiringBatches
+ *         schema:
+ *           type: boolean
+ *         description: Filter expiring batches
+ *       - in: query
+ *         name: daysAhead
+ *         schema:
+ *           type: integer
+ *         description: Days ahead for expiry check
+ *     responses:
+ *       200:
+ *         description: Stock inquiry data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/inquiry', authenticate, async (req: Request, res: Response) => {
   try {
     const filters: {
@@ -1271,6 +1792,59 @@ router.get('/inquiry', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /inventory/reports/movement:
+ *   get:
+ *     summary: Get stock movement report
+ *     description: Get detailed stock movement report with filtering
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: dateFrom
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: dateTo
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *       - in: query
+ *         name: warehouseId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by warehouse
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: itemCode
+ *         schema:
+ *           type: string
+ *         description: Filter by item code
+ *       - in: query
+ *         name: transactionType
+ *         schema:
+ *           type: string
+ *           enum: [IN, OUT, TRANSFER, ADJUSTMENT]
+ *         description: Filter by transaction type
+ *     responses:
+ *       200:
+ *         description: Stock movement report data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/reports/movement', authenticate, async (req: Request, res: Response) => {
   try {
     const filters = {
@@ -1299,6 +1873,28 @@ router.get('/reports/movement', authenticate, async (req: Request, res: Response
   }
 });
 
+/**
+ * @swagger
+ * /inventory/reports/aging:
+ *   get:
+ *     summary: Get inventory aging report
+ *     description: Get inventory aging analysis report
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: warehouseId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by warehouse
+ *     responses:
+ *       200:
+ *         description: Inventory aging report data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/reports/aging', authenticate, async (req: Request, res: Response) => {
   try {
     const warehouseId = req.query.warehouseId as string;
