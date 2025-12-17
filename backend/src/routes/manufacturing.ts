@@ -695,6 +695,168 @@ router.put('/bom/engineering-change',
 
 /**
  * @swagger
+ * /manufacturing/products:
+ *   get:
+ *     summary: Get all active products
+ *     description: Retrieve all active products for BOM creation
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       code:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       category:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
+router.get('/products',
+  authenticate,
+  async (req, res) => {
+    try {
+      const products = await prisma.product.findMany({
+        where: {
+          isActive: true,
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          description: true,
+          category: true,
+          type: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      res.json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      logger.error('Error getting products:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'PRODUCTS_FETCH_FAILED',
+          message: 'Failed to fetch products',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /manufacturing/inventory-items:
+ *   get:
+ *     summary: Get all active inventory items
+ *     description: Retrieve all active inventory items for BOM item selection
+ *     tags: [Manufacturing]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active inventory items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       code:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       category:
+ *                         type: string
+ *                       unit:
+ *                         type: string
+ *                       standardCost:
+ *                         type: number
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
+router.get('/inventory-items',
+  authenticate,
+  async (req, res) => {
+    try {
+      const inventoryItems = await prisma.inventoryItem.findMany({
+        where: {
+          isActive: true,
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          itemCode: true,
+          name: true,
+          category: true,
+          unit: true,
+          standardCost: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      res.json({
+        success: true,
+        data: inventoryItems,
+      });
+    } catch (error) {
+      logger.error('Error getting inventory items:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INVENTORY_ITEMS_FETCH_FAILED',
+          message: 'Failed to fetch inventory items',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
  * /manufacturing/branches:
  *   get:
  *     summary: Get all active branches
@@ -785,8 +947,24 @@ router.get('/branches',
  *         schema:
  *           type: string
  *           enum: [DRAFT, APPROVED, OBSOLETE]
- *           default: APPROVED
- *         description: Filter by BOM status
+ *         description: Filter by BOM status (optional)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in revision, ECN, product name/code
  *     responses:
  *       200:
  *         description: List of BOMs
@@ -800,25 +978,9 @@ router.get('/branches',
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       revision:
- *                         type: string
- *                       status:
- *                         type: string
- *                       effectiveDate:
- *                         type: string
- *                         format: date-time
- *                       product:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           code:
- *                             type: string
+ *                     $ref: '#/components/schemas/BOM'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
@@ -828,32 +990,100 @@ router.get('/boms',
   authenticate,
   async (req, res) => {
     try {
-      const { status = 'APPROVED' } = req.query;
+      const { status, page = 1, limit = 50, search } = req.query;
       
-      const boms = await prisma.bOM.findMany({
-        where: {
-          status: status as string,
-        },
-        select: {
-          id: true,
-          revision: true,
-          status: true,
-          effectiveDate: true,
-          product: {
-            select: {
-              name: true,
-              code: true,
+      const whereClause: any = {
+        isActive: true,
+        isDeleted: false,
+      };
+      
+      // Only filter by status if provided
+      if (status && status !== '') {
+        whereClause.status = status as string;
+      }
+      
+      // Add search functionality
+      if (search && search !== '') {
+        whereClause.OR = [
+          {
+            revision: {
+              contains: search as string,
+              mode: 'insensitive',
             },
           },
-        },
-        orderBy: {
-          effectiveDate: 'desc',
-        },
-      });
+          {
+            engineeringChangeNumber: {
+              contains: search as string,
+              mode: 'insensitive',
+            },
+          },
+          {
+            product: {
+              OR: [
+                {
+                  name: {
+                    contains: search as string,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  code: {
+                    contains: search as string,
+                    mode: 'insensitive',
+                  },
+                },
+              ],
+            },
+          },
+        ];
+      }
+      
+      const skip = (Number(page) - 1) * Number(limit);
+      
+      const [boms, total] = await Promise.all([
+        prisma.bOM.findMany({
+          where: whereClause,
+          select: {
+            id: true,
+            productId: true,
+            revision: true,
+            status: true,
+            effectiveDate: true,
+            engineeringChangeNumber: true,
+            approvedBy: true,
+            approvedAt: true,
+            isActive: true,
+            isDeleted: true,
+            createdAt: true,
+            updatedAt: true,
+            createdBy: true,
+            updatedBy: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc', // Show newest BOMs first
+          },
+          skip,
+          take: Number(limit),
+        }),
+        prisma.bOM.count({ where: whereClause }),
+      ]);
 
       res.json({
         success: true,
         data: boms,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          totalPages: Math.ceil(total / Number(limit)),
+        },
       });
     } catch (error) {
       logger.error('Error getting BOMs:', error);

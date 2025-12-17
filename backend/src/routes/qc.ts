@@ -1010,9 +1010,40 @@ router.get('/production-order/:id/inspections',
 );
 
 /**
- * PUT /api/qc/inspections/:id/customer-requirements
- * Update customer-specific requirements for inspection
- * Validates: Requirements 5.4 - Customer requirement embedding
+ * @swagger
+ * /qc/inspections/{id}/customer-requirements:
+ *   put:
+ *     summary: Update customer-specific requirements for inspection
+ *     description: Update customer-specific requirements for inspection (Requirements 5.4)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerRequirements]
+ *             properties:
+ *               customerRequirements:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Customer requirements updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/inspections/:id/customer-requirements',
   authenticate,
@@ -1139,9 +1170,36 @@ router.post('/certificates',
 );
 
 /**
- * POST /api/qc/certificates/:id/submit-approval
- * Submit QC certificate for customer approval
- * Validates: Requirements 5.5 - Customer approval workflows
+ * @swagger
+ * /qc/certificates/{id}/submit-approval:
+ *   post:
+ *     summary: Submit QC certificate for customer approval
+ *     description: Submit QC certificate for customer approval (Requirements 5.5)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               submissionNotes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Certificate submitted for customer approval successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/certificates/:id/submit-approval',
   authenticate,
@@ -1181,9 +1239,42 @@ router.post('/certificates/:id/submit-approval',
 );
 
 /**
- * POST /api/qc/certificates/:id/customer-approval
- * Process customer approval for QC certificate
- * Validates: Requirements 5.5 - Customer approval workflows
+ * @swagger
+ * /qc/certificates/{id}/customer-approval:
+ *   post:
+ *     summary: Process customer approval for QC certificate
+ *     description: Process customer approval for QC certificate (Requirements 5.5)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [approved, approvedBy]
+ *             properties:
+ *               approved:
+ *                 type: boolean
+ *               approvedBy:
+ *                 type: string
+ *               comments:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Certificate approval processed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/certificates/:id/customer-approval',
   authenticate,
@@ -1270,9 +1361,38 @@ router.get('/dashboard',
 );
 
 /**
- * POST /api/qc/production-integration
- * Integrate QC with production process
- * Validates: Requirements 5.1, 5.3 - QC integration with production
+ * @swagger
+ * /qc/production-integration:
+ *   post:
+ *     summary: Integrate QC with production process
+ *     description: Integrate QC with production process (Requirements 5.1, 5.3)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productionOrderId, stage]
+ *             properties:
+ *               productionOrderId:
+ *                 type: string
+ *                 format: uuid
+ *               stage:
+ *                 type: string
+ *                 enum: [CUTTING, FABRICATION, COATING, ASSEMBLY, DISPATCH, INSTALLATION]
+ *               triggerType:
+ *                 type: string
+ *                 default: MANUAL_TRIGGER
+ *     responses:
+ *       201:
+ *         description: QC inspection created and integrated with production
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/production-integration',
   authenticate,
@@ -1316,9 +1436,38 @@ router.post('/production-integration',
 );
 
 /**
- * PUT /api/qc/inspections/:id/update-production
- * Update production order status based on QC results
- * Validates: Requirements 5.3 - QC integration with production
+ * @swagger
+ * /qc/inspections/{id}/update-production:
+ *   put:
+ *     summary: Update production order status based on QC results
+ *     description: Update production order status based on QC results (Requirements 5.3)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [qcStatus]
+ *             properties:
+ *               qcStatus:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Production order status updated based on QC results
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/inspections/:id/update-production',
   authenticate,
@@ -1358,9 +1507,49 @@ router.put('/inspections/:id/update-production',
 );
 
 /**
- * GET /api/qc/performance-metrics
- * Get comprehensive QC performance metrics and inspector evaluation
- * Validates: Requirements 5.1 - QC performance metrics and inspector evaluation
+ * @swagger
+ * /qc/performance-metrics:
+ *   get:
+ *     summary: Get comprehensive QC performance metrics and inspector evaluation
+ *     description: Get comprehensive QC performance metrics and inspector evaluation (Requirements 5.1)
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: inspectorId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: metricType
+ *         schema:
+ *           type: string
+ *           default: all
+ *     responses:
+ *       200:
+ *         description: QC performance metrics retrieved successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/performance-metrics',
   authenticate,
@@ -1429,8 +1618,34 @@ router.get('/performance-metrics',
 );
 
 /**
- * GET /api/qc/alerts
- * Get current QC alerts and notifications
+ * @swagger
+ * /qc/alerts:
+ *   get:
+ *     summary: Get current QC alerts and notifications
+ *     description: Get current QC alerts and notifications with filtering options
+ *     tags: [Quality Control]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: severity
+ *         schema:
+ *           type: string
+ *           enum: [CRITICAL, HIGH, MEDIUM, LOW]
+ *       - in: query
+ *         name: acknowledged
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: QC alerts retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/alerts',
   authenticate,

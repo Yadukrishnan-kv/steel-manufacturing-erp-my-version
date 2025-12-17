@@ -362,8 +362,23 @@ router.post('/service-requests', async (req: Request, res: Response) => {
 });
 
 /**
- * Get Customer Service Requests
- * GET /api/v1/customer-portal/service-requests
+ * @swagger
+ * /customer-portal/service-requests:
+ *   get:
+ *     summary: Get customer service requests
+ *     tags: [Customer Portal]
+ *     parameters:
+ *       - in: header
+ *         name: x-customer-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Service requests retrieved successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.get('/service-requests', async (req: Request, res: Response) => {
   try {

@@ -417,8 +417,27 @@ router.post('/leads/:leadId/score',
 );
 
 /**
- * Get lead score
- * GET /api/external-integration/leads/:leadId/score
+ * @swagger
+ * /external-integration/leads/{leadId}/score:
+ *   get:
+ *     summary: Get lead score
+ *     tags: [External Integration]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lead score retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/leads/:leadId/score',
   authenticate,
@@ -672,8 +691,29 @@ router.post('/webhooks/whatsapp', async (req: Request, res: Response) => {
 });
 
 /**
- * WhatsApp webhook verification (GET)
- * GET /api/external-integration/webhooks/whatsapp
+ * @swagger
+ * /external-integration/webhooks/whatsapp:
+ *   get:
+ *     summary: WhatsApp webhook verification
+ *     tags: [External Integration]
+ *     parameters:
+ *       - in: query
+ *         name: hub.mode
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.verify_token
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.challenge
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Webhook verified
+ *       403:
+ *         description: Invalid verification token
  */
 router.get('/webhooks/whatsapp', (req: Request, res: Response) => {
   try {
@@ -768,8 +808,29 @@ router.post('/webhooks/meta', async (req: Request, res: Response) => {
 });
 
 /**
- * Meta webhook verification (GET)
- * GET /api/external-integration/webhooks/meta
+ * @swagger
+ * /external-integration/webhooks/meta:
+ *   get:
+ *     summary: Meta webhook verification
+ *     tags: [External Integration]
+ *     parameters:
+ *       - in: query
+ *         name: hub.mode
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.verify_token
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hub.challenge
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Webhook verified
+ *       403:
+ *         description: Invalid verification token
  */
 router.get('/webhooks/meta', (req: Request, res: Response) => {
   try {

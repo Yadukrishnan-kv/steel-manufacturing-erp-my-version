@@ -292,9 +292,38 @@ router.post('/profit-loss',
 );
 
 /**
- * @route GET /api/v1/finance/cash-flow-forecast
- * @desc Create cash flow forecasting and financial analytics
- * @access Private
+ * @swagger
+ * /finance/cash-flow-forecast:
+ *   get:
+ *     summary: Get cash flow forecast
+ *     description: Generate cash flow forecasting and financial analytics
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: Cash flow forecast data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/cash-flow-forecast', authenticate, async (req: Request, res: Response) => {
   try {
@@ -321,9 +350,44 @@ router.get('/cash-flow-forecast', authenticate, async (req: Request, res: Respon
 });
 
 /**
- * @route GET /api/v1/finance/manufacturing-cost-analysis
- * @desc Manufacturing cost tracking (standard vs actual) with variance analysis
- * @access Private
+ * @swagger
+ * /finance/manufacturing-cost-analysis:
+ *   get:
+ *     summary: Get manufacturing cost analysis
+ *     description: Manufacturing cost tracking (standard vs actual) with variance analysis
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: productionOrderId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by production order
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date
+ *     responses:
+ *       200:
+ *         description: Manufacturing cost analysis data
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/manufacturing-cost-analysis', authenticate, async (req: Request, res: Response) => {
   try {
@@ -557,9 +621,29 @@ router.post('/payments',
 );
 
 /**
- * @route GET /api/v1/finance/invoices/:id
- * @desc Get invoice details
- * @access Private
+ * @swagger
+ * /finance/invoices/{id}:
+ *   get:
+ *     summary: Get invoice details
+ *     description: Get detailed invoice information by ID
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Invoice ID
+ *     responses:
+ *       200:
+ *         description: Invoice details retrieved successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/invoices/:id', authenticate, async (req: Request, res: Response) => {
   try {
@@ -610,9 +694,61 @@ router.get('/invoices/:id', authenticate, async (req: Request, res: Response) =>
 });
 
 /**
- * @route GET /api/v1/finance/invoices
- * @desc Get invoices list with filtering
- * @access Private
+ * @swagger
+ * /finance/invoices:
+ *   get:
+ *     summary: Get invoices list
+ *     description: Get paginated list of invoices with filtering options
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by customer ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by invoice status
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter from date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter to date
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Invoices list retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/invoices', authenticate, async (req: Request, res: Response) => {
   try {
@@ -698,9 +834,26 @@ router.get('/invoices', authenticate, async (req: Request, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/finance/credit-management
- * @desc Get credit management and customer payment tracking
- * @access Private
+ * @swagger
+ * /finance/credit-management:
+ *   get:
+ *     summary: Get credit management data
+ *     description: Get credit management and customer payment tracking information
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by customer ID
+ *     responses:
+ *       200:
+ *         description: Credit management data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/credit-management', authenticate, async (req: Request, res: Response) => {
   try {
@@ -730,9 +883,53 @@ router.get('/credit-management', authenticate, async (req: Request, res: Respons
 });
 
 /**
- * @route POST /api/v1/finance/bank-reconciliation
- * @desc Perform banking integration for payment reconciliation
- * @access Private
+ * @swagger
+ * /finance/bank-reconciliation:
+ *   post:
+ *     summary: Perform bank reconciliation
+ *     description: Perform banking integration for payment reconciliation
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bankAccountId, statementDate, statementBalance, transactions]
+ *             properties:
+ *               bankAccountId:
+ *                 type: string
+ *               statementDate:
+ *                 type: string
+ *                 format: date
+ *               statementBalance:
+ *                 type: number
+ *               transactions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     transactionDate:
+ *                       type: string
+ *                       format: date
+ *                     description:
+ *                       type: string
+ *                     amount:
+ *                       type: number
+ *                     type:
+ *                       type: string
+ *                       enum: [DEBIT, CREDIT]
+ *                     referenceNumber:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Bank reconciliation completed successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/bank-reconciliation',
   authenticate,
@@ -757,9 +954,26 @@ router.post('/bank-reconciliation',
 );
 
 /**
- * @route GET /api/v1/finance/collection-analysis
- * @desc Get aging analysis and collection management
- * @access Private
+ * @swagger
+ * /finance/collection-analysis:
+ *   get:
+ *     summary: Get collection analysis
+ *     description: Get aging analysis and collection management data
+ *     tags: [Finance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by branch ID
+ *     responses:
+ *       200:
+ *         description: Collection analysis data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/collection-analysis', authenticate, async (req: Request, res: Response) => {
   try {
