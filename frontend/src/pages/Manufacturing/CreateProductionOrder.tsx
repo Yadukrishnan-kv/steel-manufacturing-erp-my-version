@@ -62,8 +62,8 @@ const CreateProductionOrder: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [createProductionOrder, { isLoading }] = useCreateProductionOrderMutation();
-  const { data: boms, isLoading: bomsLoading } = useGetBOMsQuery();
-  const { data: branches, isLoading: branchesLoading } = useGetBranchesQuery();
+  const { data: boms, isLoading: bomsLoading } = useGetBOMsQuery({});
+  const { data: branches, isLoading: branchesLoading } = useGetBranchesQuery({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -247,7 +247,7 @@ const CreateProductionOrder: React.FC = () => {
                         {branchesLoading ? (
                           <MenuItem disabled>Loading branches...</MenuItem>
                         ) : (
-                          (branches || []).map((branch: any) => (
+                          (branches?.data || []).map((branch: any) => (
                             <MenuItem key={branch.id} value={branch.id}>
                               {branch.name} - {branch.city}, {branch.state}
                             </MenuItem>

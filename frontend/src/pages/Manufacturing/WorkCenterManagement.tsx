@@ -97,7 +97,7 @@ const WorkCenterManagement: React.FC = () => {
 
   // API hooks
   const {
-    data: workCenters,
+    data: workCentersData,
     isLoading,
     error,
     refetch,
@@ -114,8 +114,11 @@ const WorkCenterManagement: React.FC = () => {
 
   const [createWorkCenter] = useCreateWorkCenterMutation();
 
-  // Mock data for demonstration
-  const mockWorkCenters: WorkCenter[] = workCenters || [
+  // Extract work centers from API response
+  const workCenters = workCentersData || [];
+
+  // Mock data for demonstration (fallback if API returns empty)
+  const mockWorkCenters: WorkCenter[] = workCenters.length > 0 ? workCenters : [
     {
       id: '1',
       name: 'CNC Machine Center',
@@ -198,7 +201,7 @@ const WorkCenterManagement: React.FC = () => {
   };
 
   // Filter work centers
-  const filteredWorkCenters = mockWorkCenters.filter((wc) => {
+  const filteredWorkCenters = (workCenters.length > 0 ? workCenters : mockWorkCenters).filter((wc) => {
     const matchesSearch = !search || 
       wc.name.toLowerCase().includes(search.toLowerCase()) ||
       wc.code.toLowerCase().includes(search.toLowerCase());
@@ -280,7 +283,7 @@ const WorkCenterManagement: React.FC = () => {
               variant="contained"
               size="small"
               startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-              onClick={() => setCreateDialog(true)}
+              onClick={() => navigate('/manufacturing/create-work-center')}
               sx={{
                 textTransform: 'none',
                 fontWeight: 600,

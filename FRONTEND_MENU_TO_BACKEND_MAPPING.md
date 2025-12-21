@@ -1,23 +1,55 @@
-# Frontend Menu Items to Backend API Mapping
+# Frontend Menu Items to Backend API Mapping - Dependency-Based Implementation Order
 
 ## Overview
-This document provides a complete mapping of frontend menu items to their corresponding backend APIs, endpoints, and implementation requirements. Use this as your implementation guide for building CRUD interfaces.
+This document provides a complete mapping of frontend menu items to their corresponding backend APIs, organized by implementation dependencies and complexity. The menu structure has been reordered to facilitate easier development and testing.
 
 ---
 
-## 🏭 MANUFACTURING MODULE
+## 🎯 **IMPLEMENTATION PHASES**
+
+### **PHASE 1: FOUNDATION MODULES** ✅ (Complete - No Dependencies)
+### **PHASE 2: CORE BUSINESS MODULES** (High Priority)  
+### **PHASE 3: OPERATIONAL MODULES** (Medium Priority)
+### **PHASE 4: SERVICE & SUPPORT MODULES** (Medium Priority)
+### **PHASE 5: HR & EMPLOYEE MODULES** (Medium Priority)
+### **PHASE 6: ANALYTICS & SYSTEM MODULES** (Low Priority)
+
+---
+
+## ⚙️ **PHASE 1: ADMINISTRATION MODULE** ✅ (Foundation Complete)
 
 ### Frontend Menu Items → Backend APIs
 
 | Menu Item | Route | Backend Endpoints | Implementation Status | Priority |
 |-----------|-------|-------------------|----------------------|----------|
-| **Production Orders** | `/manufacturing/production-orders` | `POST /manufacturing/production-orders`<br>`GET /manufacturing/production-orders`<br>`GET /manufacturing/production-orders/:id`<br>`PUT /manufacturing/production-orders/:id/status` | ✅ Backend Ready | 🔥 High |
-| **BOM Management** | `/manufacturing/bom-management` | `POST /manufacturing/bom`<br>`GET /manufacturing/boms`<br>`GET /manufacturing/bom/:id`<br>`PUT /manufacturing/bom/engineering-change` | 🔄 Partial Frontend | 🔥 High |
-| **Work Center Management** | `/manufacturing/work-center-management` | `POST /manufacturing/work-centers`<br>`GET /manufacturing/work-centers`<br>`PUT /manufacturing/work-centers/:id` | ✅ Backend Ready | 🔥 High |
+| **Branch Management** | `/admin/branches` | `POST /admin/branches`<br>`GET /admin/branches`<br>`PUT /admin/branches/:id` | 🔄 Partial Frontend | 🔥 Critical |
+| **User Management** | `/admin/users` | `POST /admin/users`<br>`GET /admin/users`<br>`PUT /admin/users/:id` | 🔄 Partial Frontend | 🔥 Critical |
+| **Roles & Permissions** | `/admin/roles` | `GET /rbac/roles`<br>`POST /rbac/roles`<br>`GET /rbac/permissions`<br>`PUT /rbac/roles/:id` | ✅ Backend Ready | 🔥 Critical |
+
+**Dependencies:** ❌ None (Foundation)  
+**Used By:** All other modules (users, permissions, branches)  
+**Implementation Order:** 1st (Foundation for everything)
+
+---
+
+## 🏭 **PHASE 1: MANUFACTURING MODULE** ✅ (Foundation Complete)
+
+### Frontend Menu Items → Backend APIs
+
+| Menu Item | Route | Backend Endpoints | Implementation Status | Priority |
+|-----------|-------|-------------------|----------------------|----------|
+| **Manufacturing Dashboard** | `/manufacturing` | `GET /manufacturing/dashboard`<br>`GET /manufacturing/production-orders`<br>`GET /manufacturing/schedule` | ✅ Complete | 🔥 High |
+| **Work Center Management** | `/manufacturing/work-center-management` | `POST /manufacturing/work-centers`<br>`GET /manufacturing/work-centers`<br>`PUT /manufacturing/work-centers/:id` | ✅ Complete | 🔥 High |
+| **BOM Management** | `/manufacturing/bom-management` | `POST /manufacturing/bom`<br>`GET /manufacturing/boms`<br>`GET /manufacturing/bom/:id`<br>`PUT /manufacturing/bom/engineering-change` | ✅ Complete | 🔥 High |
+| **Production Orders** | `/manufacturing/production-orders` | `POST /manufacturing/production-orders`<br>`GET /manufacturing/production-orders`<br>`GET /manufacturing/production-orders/:id`<br>`PUT /manufacturing/production-orders/:id/status` | ✅ Complete | 🔥 High |
 | **Material Consumption** | `/manufacturing/material-consumption` | `POST /manufacturing/material-consumption`<br>`GET /manufacturing/material-consumption` | ✅ Backend Ready | 🔶 Medium |
 | **Scrap Tracking** | `/manufacturing/scrap-tracking` | `POST /manufacturing/scrap-tracking`<br>`GET /manufacturing/scrap-records` | ✅ Backend Ready | 🔶 Medium |
 | **Production Schedule** | `/manufacturing/gantt-chart` | `GET /manufacturing/schedule`<br>`GET /manufacturing/production-orders` | ✅ Backend Ready | 🔥 High |
 | **Engineering Changes** | `/manufacturing/engineering-changes` | `POST /manufacturing/engineering-changes`<br>`GET /manufacturing/engineering-changes`<br>`PUT /manufacturing/engineering-changes/:id` | ✅ Backend Ready | 🔶 Medium |
+
+**Dependencies:** ❌ None for foundation modules (Work Centers, BOM, Production Orders)  
+**Dependent Modules:** Material Consumption (Production Orders + Inventory), Scrap Tracking (Production Orders + Work Centers), Production Schedule (Production Orders + Work Centers), Engineering Changes (BOMs + Production Orders)  
+**Implementation Order:** 2nd (Core business operations)
 
 ### Required CRUD Operations:
 - **Create:** Production orders, BOMs, work centers, material consumption records, scrap records, engineering changes
@@ -27,20 +59,24 @@ This document provides a complete mapping of frontend menu items to their corres
 
 ---
 
-## 🛒 SALES MODULE
+## 🛒 **PHASE 2: SALES MODULE** (High Priority - Core Business)
 
 ### Frontend Menu Items → Backend APIs
 
 | Menu Item | Route | Backend Endpoints | Implementation Status | Priority |
 |-----------|-------|-------------------|----------------------|----------|
 | **Sales Dashboard** | `/sales/dashboard` | `GET /sales/analytics`<br>`GET /sales/leads`<br>`GET /sales/orders` | 🔄 Partial Frontend | 🔥 High |
+| **Customer Management** | `/sales/customers` | `POST /sales/customers`<br>`GET /sales/customers`<br>`GET /sales/customers/:id`<br>`PUT /sales/customers/:id` | ✅ Backend Ready | 🔥 High |
 | **Lead Management** | `/sales/lead-management` | `POST /sales/leads`<br>`GET /sales/leads`<br>`GET /sales/leads/:id`<br>`PUT /sales/leads/:id` | 🔄 Partial Frontend | 🔥 High |
 | **Estimates** | `/sales/estimates` | `POST /sales/estimates`<br>`GET /sales/estimates`<br>`GET /sales/estimates/:id`<br>`PUT /sales/estimates/:id` | 🔄 Partial Frontend | 🔥 High |
 | **Sales Orders** | `/sales/orders` | `POST /sales/orders`<br>`GET /sales/orders`<br>`GET /sales/orders/:id`<br>`PUT /sales/orders/:id` | 🔄 Partial Frontend | 🔥 High |
-| **Customer Management** | `/sales/customers` | `POST /sales/customers`<br>`GET /sales/customers`<br>`GET /sales/customers/:id`<br>`PUT /sales/customers/:id` | ✅ Backend Ready | 🔥 High |
 | **Site Measurements** | `/sales/site-measurements` | `POST /sales/measurements`<br>`GET /sales/measurements` | ✅ Backend Ready | 🔶 Medium |
 | **Discount Approval** | `/sales/discount-approval` | `POST /sales/discount-approval`<br>`GET /sales/discount-approvals`<br>`PUT /sales/discount-approvals/:id` | ✅ Backend Ready | 🔶 Medium |
 | **Sales Analytics** | `/sales/analytics` | `GET /sales/analytics`<br>`GET /sales/reports` | ✅ Backend Ready | 🔵 Low |
+
+**Dependencies:** Administration (users, customers)  
+**Used By:** Manufacturing (sales orders → production orders), Finance (invoicing)  
+**Implementation Order:** 3rd (Revenue generation)
 
 ### Required CRUD Operations:
 - **Create:** Leads, estimates, sales orders, customers, site measurements, discount requests
@@ -50,7 +86,7 @@ This document provides a complete mapping of frontend menu items to their corres
 
 ---
 
-## 📦 INVENTORY MODULE
+## 📦 **PHASE 2: INVENTORY MODULE** (High Priority - Required by Manufacturing)
 
 ### Frontend Menu Items → Backend APIs
 
@@ -59,13 +95,17 @@ This document provides a complete mapping of frontend menu items to their corres
 | **Inventory Items** | `/inventory/items` | `POST /inventory/items`<br>`GET /inventory/items`<br>`PUT /inventory/items/:id` | ✅ Backend Ready | 🔥 High |
 | **Stock Levels** | `/inventory/stock-levels` | `GET /inventory/stock/:itemCode`<br>`GET /inventory/items/warehouse/:warehouseId` | ✅ Backend Ready | 🔥 High |
 | **Stock Transactions** | `/inventory/stock-transactions` | `POST /inventory/transactions`<br>`GET /inventory/transactions` | ✅ Backend Ready | 🔥 High |
-| **Batch Tracking** | `/inventory/batch-tracking` | `POST /inventory/batches`<br>`GET /inventory/batches/item/:itemId`<br>`GET /inventory/batches/expiring` | ✅ Backend Ready | 🔶 Medium |
 | **Location Management** | `/inventory/location-management` | `POST /inventory/locations/assign`<br>`GET /inventory/locations/warehouse/:warehouseId` | ✅ Backend Ready | 🔶 Medium |
-| **Barcode Scanning** | `/inventory/barcode-scanning` | `GET /inventory/barcode/:barcode` | ✅ Backend Ready | 🔶 Medium |
-| **Safety Stock Alerts** | `/inventory/safety-stock` | `GET /inventory/alerts/low-stock`<br>`POST /inventory/alerts/generate-reorder` | ✅ Backend Ready | 🔶 Medium |
+| **Batch Tracking** | `/inventory/batch-tracking` | `POST /inventory/batches`<br>`GET /inventory/batches/item/:itemId`<br>`GET /inventory/batches/expiring` | ✅ Backend Ready | 🔶 Medium |
 | **Material Allocation** | `/inventory/material-allocation` | `POST /inventory/allocate-order`<br>`GET /inventory/allocations` | ✅ Backend Ready | 🔶 Medium |
+| **Safety Stock Alerts** | `/inventory/safety-stock` | `GET /inventory/alerts/low-stock`<br>`POST /inventory/alerts/generate-reorder` | ✅ Backend Ready | 🔶 Medium |
 | **Inter-branch Transfers** | `/inventory/inter-branch-transfers` | `POST /inventory/transfers`<br>`GET /inventory/transfers`<br>`PUT /inventory/transfers/:id/status` | ✅ Backend Ready | 🔶 Medium |
+| **Barcode Scanning** | `/inventory/barcode-scanning` | `GET /inventory/barcode/:barcode` | ✅ Backend Ready | 🔵 Low |
 | **Inventory Valuation** | `/inventory/inventory-valuation` | `GET /inventory/valuation` | ✅ Backend Ready | 🔵 Low |
+
+**Dependencies:** Administration (branches, users)  
+**Used By:** Manufacturing (material consumption), Sales (product availability), Procurement (stock levels)  
+**Implementation Order:** 4th (Required by multiple modules)
 
 ### Required CRUD Operations:
 - **Create:** Inventory items, stock transactions, batches, location assignments, transfers
