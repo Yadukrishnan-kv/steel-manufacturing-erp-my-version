@@ -4,7 +4,7 @@ import type { LoginCredentials, LoginResponse, User } from '../types/auth';
 
 // Base query with authentication
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
