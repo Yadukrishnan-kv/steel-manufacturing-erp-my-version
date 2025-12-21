@@ -1779,7 +1779,7 @@ export class QCService {
     const completedInspections = await this.prisma.qCInspection.findMany({
       where: {
         status: { in: ['PASSED', 'FAILED', 'REWORK_REQUIRED'] },
-        inspectionDate: { not: null as any },
+        inspectionDate: { not: null },
         ...(branchId ? { productionOrder: { branchId } } : {}),
       },
       orderBy: { inspectionDate: 'desc' },

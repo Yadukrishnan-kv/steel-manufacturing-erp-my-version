@@ -82,7 +82,7 @@ const serviceRequestsSlice = createSlice({
       })
       .addCase(fetchServiceRequests.fulfilled, (state, action) => {
         state.isLoading = false
-        state.serviceRequests = action.payload
+        state.serviceRequests = action.payload.data
       })
       .addCase(fetchServiceRequests.rejected, (state, action) => {
         state.isLoading = false
@@ -95,7 +95,7 @@ const serviceRequestsSlice = createSlice({
       })
       .addCase(bookServiceRequest.fulfilled, (state, action) => {
         state.isLoading = false
-        state.serviceRequests.unshift(action.payload)
+        state.serviceRequests.unshift(action.payload.data)
       })
       .addCase(bookServiceRequest.rejected, (state, action) => {
         state.isLoading = false

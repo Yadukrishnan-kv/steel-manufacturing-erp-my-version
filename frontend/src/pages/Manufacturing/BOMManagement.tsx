@@ -490,7 +490,7 @@ const BOMManagement: React.FC = () => {
               variant="contained"
               size="small"
               startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-              onClick={() => setCreateBOMDialog(true)}
+              onClick={() => navigate('/manufacturing/create-bom')}
               sx={{
                 textTransform: 'none',
                 fontWeight: 600,
@@ -828,10 +828,7 @@ const BOMManagement: React.FC = () => {
                         <IconButton 
                           size="small" 
                           sx={{ p: 0.5 }}
-                          onClick={() => {
-                            setSelectedBOM(bom);
-                            setBomDetailDialog(true);
-                          }}
+                          onClick={() => navigate(`/manufacturing/bom/${bom.id}`)}
                         >
                           <ViewIcon sx={{ fontSize: 18 }} />
                         </IconButton>

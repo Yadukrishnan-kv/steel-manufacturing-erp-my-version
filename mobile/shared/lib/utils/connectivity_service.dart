@@ -25,11 +25,10 @@ class ConnectivityService {
     _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
-    final isConnected = results.any((result) => 
-        result == ConnectivityResult.mobile || 
+  void _updateConnectionStatus(ConnectivityResult result) {
+    final isConnected = result == ConnectivityResult.mobile || 
         result == ConnectivityResult.wifi ||
-        result == ConnectivityResult.ethernet);
+        result == ConnectivityResult.ethernet;
     
     if (_isConnected != isConnected) {
       _isConnected = isConnected;

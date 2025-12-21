@@ -103,13 +103,13 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false
-        state.customer = action.payload.customer
-        state.accessToken = action.payload.tokens.accessToken
-        state.refreshToken = action.payload.tokens.refreshToken
+        state.customer = action.payload.data.customer
+        state.accessToken = action.payload.data.tokens.accessToken
+        state.refreshToken = action.payload.data.tokens.refreshToken
         state.isAuthenticated = true
-        localStorage.setItem('accessToken', action.payload.tokens.accessToken)
-        localStorage.setItem('refreshToken', action.payload.tokens.refreshToken)
-        localStorage.setItem('customerId', action.payload.customer.id)
+        localStorage.setItem('accessToken', action.payload.data.tokens.accessToken)
+        localStorage.setItem('refreshToken', action.payload.data.tokens.refreshToken)
+        localStorage.setItem('customerId', action.payload.data.customer.id)
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false

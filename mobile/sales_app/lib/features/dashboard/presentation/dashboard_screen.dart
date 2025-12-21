@@ -5,6 +5,7 @@ import '../../leads/bloc/leads_bloc.dart';
 import '../../leads/presentation/leads_screen.dart';
 import '../../measurements/presentation/measurements_screen.dart';
 import '../../estimates/presentation/estimates_screen.dart';
+import '../../interactions/presentation/interactions_screen.dart';
 import '../../../services/sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const LeadsScreen(),
     const MeasurementsScreen(),
     const EstimatesScreen(),
+    const InteractionsScreen(),
   ];
 
   @override
@@ -55,6 +57,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calculate),
             label: 'Estimates',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Interactions',
           ),
         ],
       ),
@@ -346,11 +352,12 @@ class _QuickActionsGrid extends StatelessWidget {
               },
             ),
             _ActionCard(
-              title: 'Sync Data',
-              icon: Icons.sync,
+              title: 'Log Interaction',
+              icon: Icons.history,
               color: Colors.purple,
               onTap: () {
-                SalesSyncService().forcSync();
+                // Navigate to interactions screen
+                Navigator.pushNamed(context, '/interactions');
               },
             ),
           ],

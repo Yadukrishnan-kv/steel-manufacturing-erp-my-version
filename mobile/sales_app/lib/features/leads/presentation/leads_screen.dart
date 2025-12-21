@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/leads_bloc.dart';
 import '../../../models/lead.dart';
+import '../../../services/external_lead_service.dart';
 import 'lead_form_screen.dart';
 import 'lead_detail_screen.dart';
 
@@ -29,11 +30,31 @@ class _LeadsScreenState extends State<LeadsScreen> {
       appBar: AppBar(
         title: const Text('Leads'),
         actions: [
-          IconButton(
-            onPressed: () {
-              context.read<LeadsBloc>().add(LoadLeads());
-            },
-            icon: const Icon(Icons.refresh),
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'refresh',
+                child: ListTile(
+                  leading: Icon(Icons.refresh),
+                  title: Text('Refresh'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'simulate_meta',
+                child: ListTile(
+                  leading: Icon(Icons.facebook),
+                  title: Text('Simulate Meta Lead'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'simulate_google',
+                child: ListTile(
+                  leading: Icon(Icons.search),
+                  title: Text('Simulate Google Lead'),
+                ),
+              ),
+            ],
+            onSelected: (value) => _handleMenuAction(value as String),
           ),
         ],
       ),
@@ -210,6 +231,51 @@ class _LeadsScreenState extends State<LeadsScreen> {
         );
       },
     );
+  }
+
+  void _handleMenuAction(String action) async {
+    switch (action) {
+      case 'refresh':
+        context.read<LeadsBloc>().add(LoadLeads());
+        break;
+      case 'simulate_meta':
+        await _simulateExternalLead('META');
+        break;
+      case 'simulate_google':
+        await _simulateExternalLead('GOOGLE');
+        break;
+    }
+  }
+
+  Future<void> _simulateExternalLead(String source) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Simulating $source lead capture...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+
+      final externalLeadService = ExternalLeadService();
+      final lead = await externalLeadService.simulateExternalLead(source);
+      
+      // Add the lead to the bloc
+      context.read<LeadsBloc>().add(CreateLead(lead));
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$source lead captured successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to simulate $source lead: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
 

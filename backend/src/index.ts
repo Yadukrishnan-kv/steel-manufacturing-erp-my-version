@@ -40,10 +40,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: config.cors.origin,
+  origin: config.cors.origin[0] === '*' ? true : config.cors.origin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'x-customer-id'],
 }));
 
 // Rate limiting

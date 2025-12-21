@@ -4,7 +4,7 @@ import type { LoginCredentials, LoginResponse, User } from '../types/auth';
 
 // Base query with authentication
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
@@ -230,6 +230,21 @@ export const api = createApi({
       }),
       invalidatesTags: ['WorkCenter'],
     }),
+
+    getWorkCenter: builder.query<any, string>({
+      query: (id) => `/manufacturing/work-centers/${id}`,
+      transformResponse: (response: any) => response.data,
+      providesTags: ['WorkCenter'],
+    }),
+
+    updateWorkCenter: builder.mutation<any, { id: string; data: any }>({
+      query: ({ id, data }) => ({
+        url: `/manufacturing/work-centers/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['WorkCenter'],
+    }),
     
     createOperation: builder.mutation<any, any>({
       query: (operationData) => ({
@@ -267,6 +282,15 @@ export const api = createApi({
     }),
     
     // Material Consumption & Scrap Tracking
+    getMaterialConsumption: builder.query<any[], { productionOrderId?: string; startDate?: string; endDate?: string; workCenterId?: string }>({
+      query: (params = {}) => ({
+        url: '/manufacturing/material-consumption',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['ProductionOrder'],
+    }),
+    
     recordMaterialConsumption: builder.mutation<any, any>({
       query: (consumptionData) => ({
         url: '/manufacturing/material-consumption',
@@ -274,6 +298,15 @@ export const api = createApi({
         body: consumptionData,
       }),
       invalidatesTags: ['ProductionOrder'],
+    }),
+    
+    getScrapRecords: builder.query<any[], { productionOrderId?: string; startDate?: string; endDate?: string; workCenterId?: string }>({
+      query: (params = {}) => ({
+        url: '/manufacturing/scrap-tracking',
+        params,
+      }),
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['ProductionOrder'],
     }),
     
     recordScrap: builder.mutation<any, any>({
@@ -520,11 +553,26 @@ export const api = createApi({
       providesTags: ['Inventory'],
     }),
     
+    getStockTransactions: builder.query<any[], void>({
+      query: () => '/inventory/stock-transactions',
+      transformResponse: (response: any) => response.data || [],
+      providesTags: ['Inventory'],
+    }),
+    
     createInventoryItem: builder.mutation<any, any>({
       query: (itemData) => ({
         url: '/inventory/items',
         method: 'POST',
         body: itemData,
+      }),
+      invalidatesTags: ['Inventory'],
+    }),
+    
+    createStockTransaction: builder.mutation<any, any>({
+      query: (transactionData) => ({
+        url: '/inventory/stock-transactions',
+        method: 'POST',
+        body: transactionData,
       }),
       invalidatesTags: ['Inventory'],
     }),
@@ -787,12 +835,16 @@ export const {
   useApproveBOMMutation,
   useGetBOMCostQuery,
   useGetWorkCentersQuery,
+  useGetWorkCenterQuery,
   useCreateWorkCenterMutation,
+  useUpdateWorkCenterMutation,
   useCreateOperationMutation,
   useCalculateCapacityRoutingMutation,
   useGetMachineScheduleQuery,
   useGetWorkCenterUtilizationQuery,
+  useGetMaterialConsumptionQuery,
   useRecordMaterialConsumptionMutation,
+  useGetScrapRecordsQuery,
   useRecordScrapMutation,
   useCreateEngineeringChangeMutation,
   useCalculateDeliveryDateMutation,
@@ -837,7 +889,9 @@ export const {
   
   useGetInventoryItemsQuery,
   useGetStockLevelsQuery,
+  useGetStockTransactionsQuery,
   useCreateInventoryItemMutation,
+  useCreateStockTransactionMutation,
   useProcessBarcodeScanMutation,
   useGetPurchaseOrdersQuery,
   useGetRFQsQuery,
