@@ -51,7 +51,7 @@ const documentsSlice = createSlice({
       })
       .addCase(fetchDocuments.fulfilled, (state, action) => {
         state.isLoading = false
-        state.documents = action.payload
+        state.documents = action.payload.data
       })
       .addCase(fetchDocuments.rejected, (state, action) => {
         state.isLoading = false

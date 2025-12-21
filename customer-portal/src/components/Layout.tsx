@@ -19,6 +19,8 @@ import {
   MenuItem,
   useTheme,
   useMediaQuery,
+  Divider,
+  Badge,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -29,6 +31,8 @@ import {
   Feedback as FeedbackIcon,
   AccountCircle as ProfileIcon,
   Logout as LogoutIcon,
+  Notifications as NotificationsIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material'
 import { RootState, AppDispatch } from '../store/store'
 import { logout } from '../store/slices/authSlice'
@@ -74,70 +78,169 @@ export default function Layout() {
   }
 
   const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Steel ERP Portal
+    <Box sx={{ height: '100%' }}>
+      {/* Logo/Brand Section - More compact */}
+      <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontWeight: 700,
+            color: theme.palette.primary.main,
+            textAlign: 'center',
+            fontSize: '1.1rem'
+          }}
+        >
+          Steel ERP
         </Typography>
-      </Toolbar>
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path)
-                if (isMobile) {
-                  setMobileOpen(false)
-                }
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </div>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: theme.palette.text.secondary,
+            textAlign: 'center',
+            display: 'block',
+            fontSize: '0.75rem'
+          }}
+        >
+          Customer Portal
+        </Typography>
+      </Box>
+
+      {/* Navigation Menu - More compact */}
+      <Box sx={{ py: 1 }}>
+        <List sx={{ px: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => {
+                  navigate(item.path)
+                  if (isMobile) {
+                    setMobileOpen(false)
+                  }
+                }}
+                sx={{
+                  borderRadius: 1.5,
+                  py: 1,
+                  px: 1.5,
+                  minHeight: 40,
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: theme.palette.primary.contrastText,
+                    },
+                  },
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                }}
+              >
+                <ListItemIcon 
+                  sx={{ 
+                    minWidth: 32,
+                    color: location.pathname === item.path 
+                      ? theme.palette.primary.contrastText 
+                      : theme.palette.text.secondary
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    fontWeight: location.pathname === item.path ? 600 : 500,
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Box>
   )
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
+      
+      {/* Modern App Bar - More compact */}
       <AppBar
         position="fixed"
+        elevation={0}
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          boxShadow: theme.shadows[1],
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: '56px !important', px: { xs: 2, sm: 3 } }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ 
+              mr: 2, 
+              display: { md: 'none' },
+              color: theme.palette.text.primary,
+            }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Customer Portal
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-              Welcome, {customer?.name}
+          
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 600,
+                color: theme.palette.text.primary,
+                fontSize: '1.1rem',
+              }}
+            >
+              {menuItems.find(item => item.path === location.pathname)?.text || 'Customer Portal'}
             </Typography>
+          </Box>
+
+          {/* Header Actions - More compact */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <IconButton
-              size="large"
+              size="small"
+              color="inherit"
+              sx={{ color: theme.palette.text.secondary }}
+            >
+              <Badge badgeContent={0} color="error">
+                <NotificationsIcon fontSize="small" />
+              </Badge>
+            </IconButton>
+            
+            <IconButton
+              size="small"
               edge="end"
               aria-label="account of current user"
               aria-controls="profile-menu"
               aria-haspopup="true"
               onClick={handleProfileMenuOpen}
-              color="inherit"
+              sx={{ 
+                ml: 1,
+                color: theme.palette.text.primary,
+              }}
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar 
+                sx={{ 
+                  width: 32, 
+                  height: 32,
+                  backgroundColor: theme.palette.primary.main,
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                }}
+              >
                 {customer?.name?.charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
@@ -145,50 +248,95 @@ export default function Layout() {
         </Toolbar>
       </AppBar>
       
+      {/* Profile Menu */}
       <Menu
         id="profile-menu"
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleProfileMenuClose}
         onClick={handleProfileMenuClose}
+        slotProps={{
+          paper: {
+            elevation: 3,
+            sx: {
+              mt: 1.5,
+              minWidth: 180,
+              borderRadius: 2,
+              border: `1px solid ${theme.palette.divider}`,
+            },
+          },
+        }}
       >
-        <MenuItem onClick={() => navigate('/profile')}>
+        <Box sx={{ px: 2, py: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+            {customer?.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            {customer?.email}
+          </Typography>
+        </Box>
+        <MenuItem 
+          onClick={() => navigate('/profile')}
+          sx={{ py: 1, borderRadius: 1, mx: 1, my: 0.5 }}
+        >
           <ListItemIcon>
             <ProfileIcon fontSize="small" />
           </ListItemIcon>
-          Profile
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>Profile Settings</Typography>
         </MenuItem>
-        <MenuItem onClick={handleLogout}>
+        <Divider sx={{ my: 0.5 }} />
+        <MenuItem 
+          onClick={handleLogout}
+          sx={{ py: 1, borderRadius: 1, mx: 1, my: 0.5 }}
+        >
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          Logout
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>Sign Out</Typography>
         </MenuItem>
       </Menu>
 
+      {/* Navigation Drawer */}
       <Box
         component="nav"
         sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
       >
+        {/* Mobile Drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              border: 'none',
+            },
           }}
         >
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+            <IconButton onClick={handleDrawerToggle} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
           {drawer}
         </Drawer>
+        
+        {/* Desktop Drawer */}
         <Drawer
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              border: 'none',
+              borderRight: `1px solid ${theme.palette.divider}`,
+            },
           }}
           open
         >
@@ -196,16 +344,20 @@ export default function Layout() {
         </Drawer>
       </Box>
 
+      {/* Main Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
+          minHeight: '100vh',
+          backgroundColor: theme.palette.background.default,
         }}
       >
-        <Toolbar />
-        <Outlet />
+        <Toolbar sx={{ minHeight: '56px !important' }} />
+        <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   )

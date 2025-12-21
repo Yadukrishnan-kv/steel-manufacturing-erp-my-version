@@ -7,27 +7,29 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
-  LinearProgress,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Divider,
+  Paper,
+  Stack,
+  Avatar,
+  LinearProgress,
+  useTheme,
 } from '@mui/material'
 import {
   ShoppingCart as OrderIcon,
   Build as ServiceIcon,
   CheckCircle as CompletedIcon,
-  Schedule as PendingIcon,
-  Warning as WarningIcon,
+  TrendingUp as TrendingUpIcon,
+  Assessment as AssessmentIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material'
 import { RootState, AppDispatch } from '../store/store'
 import { fetchOrders } from '../store/slices/ordersSlice'
 import { fetchServiceRequests } from '../store/slices/serviceRequestsSlice'
+import { ModernButton } from '../components/modern'
 
 export default function Dashboard() {
+  const theme = useTheme()
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   
@@ -59,258 +61,342 @@ export default function Dashboard() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'delivered':
-        return <CompletedIcon color="success" />
-      case 'pending':
-      case 'scheduled':
-        return <PendingIcon color="warning" />
-      default:
-        return <WarningIcon color="action" />
-    }
-  }
-
-  const recentOrders = orders.slice(0, 3)
-  const recentServiceRequests = serviceRequests.slice(0, 3)
+  const recentOrders = (orders || []).slice(0, 3)
+  const recentServiceRequests = (serviceRequests || []).slice(0, 3)
 
   const orderStats = {
-    total: orders.length,
-    inProgress: orders.filter(o => o.status.toLowerCase().includes('progress') || o.status.toLowerCase() === 'confirmed').length,
-    completed: orders.filter(o => o.status.toLowerCase() === 'delivered' || o.status.toLowerCase() === 'completed').length,
+    total: (orders || []).length,
+    inProgress: (orders || []).filter(o => o.status.toLowerCase().includes('progress') || o.status.toLowerCase() === 'confirmed').length,
+    completed: (orders || []).filter(o => o.status.toLowerCase() === 'delivered' || o.status.toLowerCase() === 'completed').length,
   }
 
   const serviceStats = {
-    total: serviceRequests.length,
-    scheduled: serviceRequests.filter(s => s.status.toLowerCase() === 'scheduled').length,
-    completed: serviceRequests.filter(s => s.status.toLowerCase() === 'completed').length,
+    total: (serviceRequests || []).length,
+    scheduled: (serviceRequests || []).filter(s => s.status.toLowerCase() === 'scheduled').length,
+    completed: (serviceRequests || []).filter(s => s.status.toLowerCase() === 'completed').length,
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
   }
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Welcome back, {customer?.name}!
-      </Typography>
-      
+      {/* Welcome Header - More compact */}
+      <Paper
+        elevation={0}
+        sx={{
+          background: `linear-gradient(135deg, ${theme.custom.colors.primary[600]} 0%, ${theme.custom.colors.primary[700]} 100%)`,
+          color: 'white',
+          p: 3,
+          borderRadius: 2,
+          mb: 3,
+        }}
+      >
+        <Grid container alignItems="center" spacing={2}>
+          <Grid item>
+            <Avatar
+              sx={{
+                width: 56,
+                height: 56,
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              {customer?.name?.charAt(0).toUpperCase()}
+            </Avatar>
+          </Grid>
+          <Grid item xs>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+              Welcome back, {customer?.name?.split(' ')[0]}!
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 400 }}>
+              Here's what's happening with your orders and services
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Stats Cards - More compact */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={6} sm={3}>
+          <Card
+            elevation={0}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.custom.colors.primary[600]} 0%, ${theme.custom.colors.primary[700]} 100%)`,
+              color: 'white',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, fontSize: '1.75rem' }}>
+                    {orderStats.total}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.75rem' }}>
+                    Total Orders
+                  </Typography>
+                </Box>
+                <OrderIcon sx={{ fontSize: 32, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={6} sm={3}>
+          <Card
+            elevation={0}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.custom.colors.secondary[500]} 0%, ${theme.custom.colors.secondary[600]} 100%)`,
+              color: 'white',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, fontSize: '1.75rem' }}>
+                    {orderStats.inProgress}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.75rem' }}>
+                    In Progress
+                  </Typography>
+                </Box>
+                <TrendingUpIcon sx={{ fontSize: 32, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={6} sm={3}>
+          <Card
+            elevation={0}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.custom.colors.accent[500]} 0%, ${theme.custom.colors.accent[600]} 100%)`,
+              color: 'white',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, fontSize: '1.75rem' }}>
+                    {serviceStats.total}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.75rem' }}>
+                    Services
+                  </Typography>
+                </Box>
+                <ServiceIcon sx={{ fontSize: 32, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={6} sm={3}>
+          <Card
+            elevation={0}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.custom.colors.semantic.success[500]} 0%, ${theme.custom.colors.semantic.success[600]} 100%)`,
+              color: 'white',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, fontSize: '1.75rem' }}>
+                    {orderStats.completed}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.75rem' }}>
+                    Completed
+                  </Typography>
+                </Box>
+                <CompletedIcon sx={{ fontSize: 32, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       <Grid container spacing={3}>
-        {/* Order Statistics */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <OrderIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Orders</Typography>
-              </Box>
-              <Typography variant="h3" color="primary">
-                {orderStats.total}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {orderStats.inProgress} in progress, {orderStats.completed} completed
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Service Statistics */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <ServiceIcon color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Services</Typography>
-              </Box>
-              <Typography variant="h3" color="secondary">
-                {serviceStats.total}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {serviceStats.scheduled} scheduled, {serviceStats.completed} completed
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Quick Actions */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Quick Actions
-              </Typography>
-              <Box display="flex" flexDirection="column" gap={1}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate('/service-requests')}
-                >
-                  Book Service
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate('/feedback')}
-                >
-                  Give Feedback
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Account Info */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Account Info
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Customer ID: {customer?.code}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Email: {customer?.email}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Phone: {customer?.phone}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Orders */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
+        {/* Recent Orders - More compact */}
+        <Grid item xs={12} lg={6}>
+          <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: 2.5 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Recent Orders</Typography>
-                <Button size="small" onClick={() => navigate('/orders')}>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                  Recent Orders
+                </Typography>
+                <ModernButton
+                  variant="tertiary"
+                  size="small"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => navigate('/orders')}
+                >
                   View All
-                </Button>
+                </ModernButton>
               </Box>
               
               {recentOrders.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No orders found
-                </Typography>
+                <Box textAlign="center" py={3}>
+                  <AssessmentIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                  <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontWeight: 600 }}>
+                    No orders yet
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                    Your orders will appear here once you place them.
+                  </Typography>
+                </Box>
               ) : (
-                <List>
+                <Stack spacing={1.5}>
                   {recentOrders.map((order, index) => (
-                    <div key={order.id}>
-                      <ListItem
-                        button
-                        onClick={() => navigate(`/orders/${order.id}`)}
-                        sx={{ px: 0 }}
-                      >
-                        <ListItemIcon>
-                          {getStatusIcon(order.status)}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`Order #${order.orderNumber}`}
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
-                                ₹{order.totalAmount.toLocaleString()}
-                              </Typography>
-                              <Chip
-                                label={order.status}
-                                size="small"
-                                color={getStatusColor(order.status) as any}
-                                sx={{ mt: 0.5 }}
-                              />
-                            </Box>
-                          }
+                    <Box key={order.id}>
+                      <Box display="flex" alignItems="center" justifyContent="space-between" py={1}>
+                        <Box display="flex" alignItems="center" gap={1.5}>
+                          <Avatar sx={{ backgroundColor: 'primary.main', width: 32, height: 32 }}>
+                            <OrderIcon fontSize="small" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                              Order #{order.orderNumber}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                              {formatDate(order.orderDate)} • ₹{order.totalAmount.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip
+                          label={order.status}
+                          color={getStatusColor(order.status) as any}
+                          size="small"
+                          sx={{ fontWeight: 600, fontSize: '0.75rem' }}
                         />
-                      </ListItem>
+                      </Box>
                       {index < recentOrders.length - 1 && <Divider />}
-                    </div>
+                    </Box>
                   ))}
-                </List>
+                </Stack>
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Recent Service Requests */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
+        {/* Recent Service Requests - More compact */}
+        <Grid item xs={12} lg={6}>
+          <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: 2.5 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Recent Service Requests</Typography>
-                <Button size="small" onClick={() => navigate('/service-requests')}>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                  Service Requests
+                </Typography>
+                <ModernButton
+                  variant="tertiary"
+                  size="small"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => navigate('/service-requests')}
+                >
                   View All
-                </Button>
+                </ModernButton>
               </Box>
               
               {recentServiceRequests.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No service requests found
-                </Typography>
+                <Box textAlign="center" py={3}>
+                  <ServiceIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                  <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontWeight: 600 }}>
+                    No service requests
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.875rem' }}>
+                    Book a service to get started.
+                  </Typography>
+                  <ModernButton
+                    variant="primary"
+                    size="small"
+                    onClick={() => navigate('/service-requests')}
+                  >
+                    Book Service
+                  </ModernButton>
+                </Box>
               ) : (
-                <List>
+                <Stack spacing={1.5}>
                   {recentServiceRequests.map((service, index) => (
-                    <div key={service.id}>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon>
-                          {getStatusIcon(service.status)}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`${service.type} - #${service.serviceNumber}`}
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
-                                {new Date(service.scheduledDate).toLocaleDateString()}
-                              </Typography>
-                              <Chip
-                                label={service.status}
-                                size="small"
-                                color={getStatusColor(service.status) as any}
-                                sx={{ mt: 0.5 }}
-                              />
-                            </Box>
-                          }
+                    <Box key={service.id}>
+                      <Box display="flex" alignItems="center" justifyContent="space-between" py={1}>
+                        <Box display="flex" alignItems="center" gap={1.5}>
+                          <Avatar sx={{ backgroundColor: 'secondary.main', width: 32, height: 32 }}>
+                            <ServiceIcon fontSize="small" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                              {service.type} - #{service.serviceNumber}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                              {formatDate(service.scheduledDate)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip
+                          label={service.status}
+                          color={getStatusColor(service.status) as any}
+                          size="small"
+                          sx={{ fontWeight: 600, fontSize: '0.75rem' }}
                         />
-                      </ListItem>
+                      </Box>
                       {index < recentServiceRequests.length - 1 && <Divider />}
-                    </div>
+                    </Box>
                   ))}
-                </List>
+                </Stack>
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Production Progress (if any orders in progress) */}
-        {orderStats.inProgress > 0 && (
+        {/* Production Progress - More compact */}
+        {(orders || []).filter(order => order.status.toLowerCase().includes('progress') || order.status.toLowerCase() === 'confirmed').length > 0 && (
           <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+            <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: '1.1rem' }}>
                   Production Progress
                 </Typography>
-                {orders
+                {(orders || [])
                   .filter(order => order.status.toLowerCase().includes('progress') || order.status.toLowerCase() === 'confirmed')
                   .slice(0, 2)
                   .map(order => (
                     <Box key={order.id} mb={3}>
-                      <Typography variant="subtitle1" gutterBottom>
+                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5, fontSize: '0.95rem' }}>
                         Order #{order.orderNumber}
                       </Typography>
                       <Grid container spacing={2}>
-                        {order.productionProgress.map(stage => (
-                          <Grid item xs={12} sm={6} md={2} key={stage.stage}>
-                            <Box>
-                              <Typography variant="body2" gutterBottom>
+                        {(order.productionProgress || []).map(stage => (
+                          <Grid item xs={6} sm={4} md={2} key={stage.stage}>
+                            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
+                              <Typography variant="caption" sx={{ fontWeight: 600, mb: 1, display: 'block', fontSize: '0.75rem' }}>
                                 {stage.stage}
                               </Typography>
                               <LinearProgress
                                 variant="determinate"
                                 value={stage.completionPercentage}
                                 color={stage.status === 'COMPLETED' ? 'success' : stage.status === 'IN_PROGRESS' ? 'primary' : 'inherit'}
+                                sx={{ mb: 1, borderRadius: 1, height: 6 }}
                               />
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
                                 {stage.completionPercentage}%
                               </Typography>
-                            </Box>
+                              <Chip
+                                label={stage.status}
+                                size="small"
+                                color={stage.status === 'COMPLETED' ? 'success' : stage.status === 'IN_PROGRESS' ? 'primary' : 'default'}
+                                sx={{ fontWeight: 600, fontSize: '0.65rem', height: 20 }}
+                              />
+                            </Paper>
                           </Grid>
                         ))}
                       </Grid>

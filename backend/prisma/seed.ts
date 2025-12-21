@@ -575,11 +575,13 @@ async function main() {
       await prisma.customerPortalCredentials.upsert({
         where: { customerId: customer.id },
         update: {
-          password: hashedCustomerPassword,
+          email: customer.email,
+          passwordHash: hashedCustomerPassword,
         },
         create: {
           customerId: customer.id,
-          password: hashedCustomerPassword,
+          email: customer.email,
+          passwordHash: hashedCustomerPassword,
           isActive: true,
         },
       });

@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Box,
-  Button,
   Container,
   TextField,
   Typography,
   Paper,
   Alert,
-  CircularProgress,
   Tab,
   Tabs,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  useTheme,
 } from '@mui/material'
+import {
+  Business as BusinessIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+} from '@mui/icons-material'
 import { RootState, AppDispatch } from '../store/store'
 import { login, clearError } from '../store/slices/authSlice'
+import { ModernButton } from '../components/modern'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -33,12 +42,13 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`login-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
     </div>
   )
 }
 
 export default function Login() {
+  const theme = useTheme()
   const [tabValue, setTabValue] = useState(0)
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -58,7 +68,7 @@ export default function Login() {
     dispatch(clearError())
   }, [dispatch])
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
     dispatch(clearError())
   }
@@ -75,100 +85,201 @@ export default function Login() {
   }
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ width: '100%', mt: 3 }}>
-          <Box sx={{ p: 4 }}>
-            <Typography component="h1" variant="h4" align="center" gutterBottom>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Card
+          elevation={24}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          }}
+        >
+          {/* Header Section - More compact */}
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${theme.custom.colors.primary[600]} 0%, ${theme.custom.colors.primary[700]} 100%)`,
+              color: 'white',
+              p: 3,
+              textAlign: 'center',
+            }}
+          >
+            <BusinessIcon sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
               Steel ERP
             </Typography>
-            <Typography component="h2" variant="h5" align="center" gutterBottom>
+            <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 400 }}>
               Customer Portal
             </Typography>
-            
+          </Box>
+
+          <CardContent sx={{ p: 3 }}>
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 2,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '0.875rem',
+                  },
+                }}
+              >
                 {error}
               </Alert>
             )}
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={handleTabChange} aria-label="login tabs">
-                <Tab label="Login with Email" />
-                <Tab label="Login with Phone" />
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs 
+                value={tabValue} 
+                onChange={handleTabChange} 
+                variant="fullWidth"
+                sx={{
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    minHeight: 40,
+                  },
+                }}
+              >
+                <Tab 
+                  icon={<EmailIcon fontSize="small" />} 
+                  iconPosition="start" 
+                  label="Email Login" 
+                />
+                <Tab 
+                  icon={<PhoneIcon fontSize="small" />} 
+                  iconPosition="start" 
+                  label="Phone Login" 
+                />
               </Tabs>
             </Box>
 
             <form onSubmit={handleSubmit}>
-              <TabPanel value={tabValue} index={0}>
+              <Stack spacing={2.5}>
+                <TabPanel value={tabValue} index={0}>
+                  <TextField
+                    fullWidth
+                    id="email"
+                    label="Email Address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    size="small"
+                    InputProps={{
+                      sx: { borderRadius: 2 },
+                    }}
+                  />
+                </TabPanel>
+                
+                <TabPanel value={tabValue} index={1}>
+                  <TextField
+                    fullWidth
+                    id="phone"
+                    label="Phone Number"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    autoFocus
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    size="small"
+                    InputProps={{
+                      sx: { borderRadius: 2 },
+                    }}
+                  />
+                </TabPanel>
+
                 <TextField
-                  margin="normal"
-                  required
                   fullWidth
-                  id="email"
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                  autoFocus
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </TabPanel>
-              
-              <TabPanel value={tabValue} index={1}>
-                <TextField
-                  margin="normal"
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  fullWidth
-                  id="phone"
-                  label="Phone Number"
-                  name="phone"
-                  autoComplete="tel"
-                  autoFocus
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  size="small"
+                  InputProps={{
+                    sx: { borderRadius: 2 },
+                  }}
                 />
-              </TabPanel>
 
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={isLoading}
-              >
-                {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
-              </Button>
-
-              <Box textAlign="center">
-                <Link to="/register">
-                  Don't have an account? Sign Up
-                </Link>
-              </Box>
+                <ModernButton
+                  type="submit"
+                  fullWidth
+                  variant="primary"
+                  size="large"
+                  disabled={isLoading}
+                  loading={isLoading}
+                >
+                  Sign In
+                </ModernButton>
+              </Stack>
             </form>
-          </Box>
+
+            <Divider sx={{ my: 2.5 }} />
+
+            <Box textAlign="center">
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.875rem' }}>
+                Don't have an account?
+              </Typography>
+              <ModernButton
+                href="/register"
+                variant="tertiary"
+                size="small"
+              >
+                Create Account
+              </ModernButton>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Demo Credentials - More compact */}
+        <Paper
+          elevation={8}
+          sx={{
+            mt: 2,
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+          }}
+        >
+          <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5, textAlign: 'center', fontSize: '0.95rem' }}>
+            Demo Credentials
+          </Typography>
+          <Stack spacing={0.5}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Email: customer@example.com
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Phone: 9876543210
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                Password: Customer123!
+              </Typography>
+            </Box>
+          </Stack>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   )
 }
