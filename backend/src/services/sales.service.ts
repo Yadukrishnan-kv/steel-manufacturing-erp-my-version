@@ -1130,6 +1130,58 @@ export class SalesService {
   }
 
   /**
+   * Update lead information
+   */
+  async updateLead(leadId: string, updateData: any, updatedBy: string): Promise<LeadWithMeasurements> {
+    try {
+      const lead = await this.prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          ...updateData,
+          updatedBy,
+          updatedAt: new Date(),
+        },
+        include: {
+          measurements: true,
+          estimates: {
+            include: {
+              items: true,
+            },
+          },
+        },
+      });
+
+      logger.info('Lead updated successfully', {
+        leadId,
+        updatedBy,
+      });
+
+      return lead as LeadWithMeasurements;
+    } catch (error) {
+      logger.error('Error updating lead:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete lead
+   */
+  async deleteLead(leadId: string): Promise<void> {
+    try {
+      await this.prisma.lead.delete({
+        where: { id: leadId },
+      });
+
+      logger.info('Lead deleted successfully', {
+        leadId,
+      });
+    } catch (error) {
+      logger.error('Error deleting lead:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Update lead status with automated workflow
    */
   async updateLeadStatus(

@@ -44,12 +44,15 @@ import {
   LocationOn,
   Refresh,
   AssignmentInd,
+  Delete,
 } from '@mui/icons-material';
 import {
   useGetLeadsQuery,
   useCreateLeadMutation,
+  useUpdateLeadMutation,
   useBulkAssignLeadsMutation,
   useGetFollowUpTasksQuery,
+  useDeleteLeadMutation,
 } from '../../services/api';
 
 interface TabPanelProps {
@@ -67,9 +70,103 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 interface CreateLeadDialogProps {
   open: boolean;
   onClose: () => void;
+  editLead?: any;
+  isEdit?: boolean;
 }
 
-const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) => {
+interface ViewLeadDialogProps {
+  open: boolean;
+  onClose: () => void;
+  lead: any;
+}
+
+const ViewLeadDialog: React.FC<ViewLeadDialogProps> = ({ open, onClose, lead }) => {
+  if (!lead) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Lead Details</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Lead Number</Typography>
+            <Typography variant="body1">{lead.leadNumber || 'N/A'}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+            <Chip label={lead.status} color={getStatusColor(lead.status) as any} size="small" />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Contact Name</Typography>
+            <Typography variant="body1">{lead.contactName}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
+            <Typography variant="body1">{lead.phone}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+            <Typography variant="body1">{lead.email || 'N/A'}</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Source</Typography>
+            <Chip label={lead.source} size="small" variant="outlined" />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Priority</Typography>
+            <Chip label={lead.priority} color={getPriorityColor(lead.priority) as any} size="small" />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" color="text.secondary">Estimated Value</Typography>
+            <Typography variant="body1">
+              {lead.estimatedValue ? `₹${(lead.estimatedValue / 1000).toFixed(0)}K` : 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="text.secondary">Address</Typography>
+            <Typography variant="body1">{lead.address || 'N/A'}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="text.secondary">Requirements</Typography>
+            <Typography variant="body1">{lead.requirements || 'N/A'}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="text.secondary">Created At</Typography>
+            <Typography variant="body1">
+              {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'N/A'}
+            </Typography>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'NEW': return 'info';
+    case 'QUALIFIED': return 'primary';
+    case 'CONVERTED': return 'success';
+    case 'LOST': return 'error';
+    case 'ESTIMATE_APPROVED': return 'success';
+    default: return 'default';
+  }
+}
+
+function getPriorityColor(priority: string) {
+  switch (priority) {
+    case 'HIGH': return 'error';
+    case 'MEDIUM': return 'warning';
+    case 'LOW': return 'info';
+    default: return 'default';
+  }
+}
+
+const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose, editLead, isEdit = false }) => { 
+ 
   const [leadData, setLeadData] = useState({
     source: '',
     contactName: '',
@@ -81,22 +178,53 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
     priority: 'MEDIUM',
   });
 
-  const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
+  // Initialize form with edit data when in edit mode
+  React.useEffect(() => {
+    if (isEdit && editLead) {
+      setLeadData({
+        source: editLead.source || '',
+        contactName: editLead.contactName || '',
+        phone: editLead.phone || '',
+        email: editLead.email || '',
+        address: editLead.address || '',
+        requirements: editLead.requirements || '',
+        estimatedValue: editLead.estimatedValue ? editLead.estimatedValue.toString() : '',
+        priority: editLead.priority || 'MEDIUM',
+      });
+    } else {
+      setLeadData({
+        source: '',
+        contactName: '',
+        phone: '',
+        email: '',
+        address: '',
+        requirements: '',
+        estimatedValue: '',
+        priority: 'MEDIUM',
+      });
+    }
+  }, [isEdit, editLead, open]);
 
-  const handleInputChange = (field: string) => (event: any) => {
-    setLeadData(prev => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-  };
+  const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
+  const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
+
+  const isLoading = isCreating || isUpdating;
 
   const handleSubmit = async () => {
     try {
+      console.log('Preparing to submit lead data:', leadData);
       const payload = {
         ...leadData,
         estimatedValue: leadData.estimatedValue ? parseFloat(leadData.estimatedValue) : undefined,
       };
-      await createLead(payload).unwrap();
+      console.log('Submitting lead data:', payload);
+      
+      if (isEdit && editLead) {
+        await updateLead({ id: editLead.id, leadData: payload }).unwrap();
+      } else {
+        await createLead(payload).unwrap();
+      }
+      
       onClose();
       setLeadData({
         source: '',
@@ -109,21 +237,22 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
         priority: 'MEDIUM',
       });
     } catch (error) {
-      console.error('Error creating lead:', error);
+      console.error('Error saving lead:', error);
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Create New Lead</DialogTitle>
+      <DialogTitle>{isEdit ? 'Edit Lead' : 'Create New Lead'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <InputLabel>Source</InputLabel>
               <Select
+                name="source"
                 value={leadData.source}
-                onChange={handleInputChange('source')}
+                onChange={(e) => setLeadData({...leadData, source: e.target.value})}
                 label="Source"
               >
                 <MenuItem value="META">Facebook/Instagram</MenuItem>
@@ -137,8 +266,9 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
             <FormControl fullWidth>
               <InputLabel>Priority</InputLabel>
               <Select
+                name="priority"
                 value={leadData.priority}
-                onChange={handleInputChange('priority')}
+                onChange={(e) => setLeadData({...leadData, priority: e.target.value})}
                 label="Priority"
               >
                 <MenuItem value="LOW">Low</MenuItem>
@@ -150,45 +280,50 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              name="contactName"
               label="Contact Name"
               value={leadData.contactName}
-              onChange={handleInputChange('contactName')}
+              onChange={(e) => setLeadData({...leadData, contactName: e.target.value})}
               required
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              name="phone"
               label="Phone Number"
               value={leadData.phone}
-              onChange={handleInputChange('phone')}
+              onChange={(e) => setLeadData({...leadData, phone: e.target.value})}
               required
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              name="email"
               label="Email"
               type="email"
               value={leadData.email}
-              onChange={handleInputChange('email')}
+              onChange={(e) => setLeadData({...leadData, email: e.target.value})}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              name="estimatedValue"
               label="Estimated Value (₹)"
               type="number"
               value={leadData.estimatedValue}
-              onChange={handleInputChange('estimatedValue')}
+              onChange={(e) => setLeadData({...leadData, estimatedValue: e.target.value})}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth
+              name="address"
               label="Address"
               value={leadData.address}
-              onChange={handleInputChange('address')}
+              onChange={(e) => setLeadData({...leadData, address: e.target.value})}
               multiline
               rows={2}
             />
@@ -196,9 +331,10 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
           <Grid item xs={12}>
             <TextField
               fullWidth
+              name="requirements"
               label="Requirements"
               value={leadData.requirements}
-              onChange={handleInputChange('requirements')}
+              onChange={(e) => setLeadData({...leadData, requirements: e.target.value})}
               multiline
               rows={3}
             />
@@ -210,9 +346,9 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
         <Button 
           onClick={handleSubmit} 
           variant="contained"
-          disabled={isCreating || !leadData.contactName || !leadData.phone || !leadData.source}
+          disabled={isLoading || !leadData.contactName || !leadData.phone || !leadData.source}
         >
-          {isCreating ? <CircularProgress size={20} /> : 'Create Lead'}
+          {isLoading ? <CircularProgress size={20} /> : (isEdit ? 'Update Lead' : 'Create Lead')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -222,7 +358,11 @@ const CreateLeadDialog: React.FC<CreateLeadDialogProps> = ({ open, onClose }) =>
 const LeadManagement: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [editedLead, setEditedLead] = useState<any>({});
   const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
@@ -233,13 +373,16 @@ const LeadManagement: React.FC = () => {
     assignedTo: '',
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [deleteLead]=useDeleteLeadMutation();
 
   // API calls
   const { 
     data: leadsData, 
+
     isLoading: isLeadsLoading, 
     refetch: refetchLeads 
   } = useGetLeadsQuery(filters);
+  console.log('Leads Data:', leadsData);
 
   const { 
     data: followUpTasks, 
@@ -318,6 +461,20 @@ const LeadManagement: React.FC = () => {
         <CircularProgress />
       </Box>
     );
+  }
+  const handleViewLead = (lead: any) => {
+    console.log('Viewing lead:', lead);
+    setSelectedLead(lead);
+    setViewDialogOpen(true);
+  };
+  const handleEditLead = (lead: any) => {
+    console.log('Editing lead:', lead);
+    setEditedLead(lead);
+    setEditDialogOpen(true);
+  };
+  const onDeleteLead=async(id:string)=>{
+    const response= await  deleteLead({id}).unwrap()
+    console.log('Delete response:',response);
   }
 
   return (
@@ -569,10 +726,13 @@ const LeadManagement: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <IconButton size="small">
-                          <Visibility />
+                          <Visibility  onClick={()=>handleViewLead(lead)}/>
                         </IconButton>
                         <IconButton size="small">
-                          <Edit />
+                          <Edit onClick={() => handleEditLead(lead)}   />
+                        </IconButton>
+                        <IconButton size="small">
+                          <Delete  onClick={()=> onDeleteLead(lead.id)}/>
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -720,6 +880,19 @@ const LeadManagement: React.FC = () => {
       <CreateLeadDialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
+      />
+      
+      <CreateLeadDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        editLead={editedLead}
+        isEdit={true}
+      />
+      
+      <ViewLeadDialog
+        open={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        lead={selectedLead}
       />
     </Box>
   );

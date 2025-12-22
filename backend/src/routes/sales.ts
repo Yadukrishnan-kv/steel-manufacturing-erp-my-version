@@ -25,6 +25,19 @@ const createLeadSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
 });
 
+const updateLeadSchema = z.object({
+  source: z.enum(['META', 'GOOGLE', 'REFERRAL', 'DIRECT']).optional(),
+  sourceRef: z.string().optional(),
+  contactName: z.string().min(1).optional(),
+  phone: z.string().min(10).optional(),
+  email: z.string().email().optional(),
+  address: z.string().optional(),
+  requirements: z.string().optional(),
+  estimatedValue: z.number().positive().optional(),
+  assignedTo: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+});
+
 const siteMeasurementSchema = z.object({
   leadId: z.string().uuid(),
   location: z.object({
@@ -254,6 +267,109 @@ router.get('/leads/:id',
         error: {
           code: 'LEAD_NOT_FOUND',
           message: 'Lead not found',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /sales/leads/{id}:
+ *   put:
+ *     summary: Update lead
+ *     description: Update lead information
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateLead'
+ *     responses:
+ *       200:
+ *         description: Lead updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.put('/leads/:id',
+  authenticate,
+  validate({ body: updateLeadSchema }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Lead ID is required',
+          },
+        });
+        return;
+      }
+
+      const lead = await salesService.updateLead(id, req.body, req.user?.id || 'system');
+
+      res.json({
+        success: true,
+        data: lead,
+        message: 'Lead updated successfully',
+      });
+    } catch (error) {
+      logger.error('Error updating lead:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'LEAD_UPDATE_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to update lead',
+        },
+      });
+    }
+  }
+);
+
+router.delete('/leads/:id',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Lead ID is required',
+          },
+        });
+        return;
+      }
+
+      await salesService.deleteLead(id);
+
+      res.json({
+        success: true,
+        message: 'Lead deleted successfully',
+      });
+    } catch (error) {
+      logger.error('Error deleting lead:', error);
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'LEAD_DELETE_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to delete lead',
         },
       });
     }

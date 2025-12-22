@@ -373,6 +373,7 @@ export const api = createApi({
         url: '/sales/leads',
         params,
       }),
+      
       transformResponse: (response: any) => response.data || { leads: [], pagination: {} },
       providesTags: ['Lead'],
     }),
@@ -388,6 +389,23 @@ export const api = createApi({
         url: '/sales/leads',
         method: 'POST',
         body: leadData,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+
+    updateLead: builder.mutation<any, { id: string; leadData: any }>({
+      query: ({ id, leadData }) => ({
+        url: `/sales/leads/${id}`,
+        method: 'PUT',
+        body: leadData,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+
+    deleteLead: builder.mutation<any, { id: string }>({
+      query: ({ id }) => ({
+        url: `/sales/leads/${id}`,
+        method: 'DELETE',
       }),
       invalidatesTags: ['Lead'],
     }),
@@ -859,6 +877,8 @@ export const {
   useGetLeadsQuery,
   useGetLeadQuery,
   useCreateLeadMutation,
+  useUpdateLeadMutation,
+  useDeleteLeadMutation,
   useUpdateLeadStatusMutation,
   useAssignLeadMutation,
   useBulkAssignLeadsMutation,
