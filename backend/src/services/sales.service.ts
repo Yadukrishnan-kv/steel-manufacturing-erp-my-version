@@ -2014,4 +2014,29 @@ export class SalesService {
       throw error;
     }
   }
+
+  /**
+   * Bulk delete leads
+   */
+  async bulkDeleteLeads(leadIds: string[]): Promise<number> {
+    try {
+      const result = await this.prisma.lead.deleteMany({
+        where: {
+          id: {
+            in: leadIds,
+          },
+        },
+      });
+
+      logger.info('Bulk lead deletion completed', {
+        deletedCount: result.count,
+        leadIds,
+      });
+
+      return result.count;
+    } catch (error) {
+      logger.error('Error in bulk lead deletion:', error);
+      throw error;
+    }
+  }
 }

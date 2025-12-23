@@ -437,6 +437,15 @@ export const api = createApi({
       invalidatesTags: ['Lead'],
     }),
     
+    bulkDeleteLeads: builder.mutation<any, { leadIds: string[] }>({
+      query: (data) => ({
+        url: '/sales/leads/bulkDelete',
+        method: 'DELETE',
+        body: data,
+      }),
+      invalidatesTags: ['Lead'],
+    }),
+    
     getLeadAssignmentRecommendations: builder.query<any, string>({
       query: (leadId) => `/sales/leads/${leadId}/assignment-recommendations`,
       transformResponse: (response: any) => response.data,
@@ -882,6 +891,7 @@ export const {
   useUpdateLeadStatusMutation,
   useAssignLeadMutation,
   useBulkAssignLeadsMutation,
+  useBulkDeleteLeadsMutation,
   useGetLeadAssignmentRecommendationsQuery,
   
   // Site Measurement hooks

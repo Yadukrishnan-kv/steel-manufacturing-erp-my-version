@@ -55,6 +55,7 @@ import {
   useBulkAssignLeadsMutation,
   useGetFollowUpTasksQuery,
   useDeleteLeadMutation,
+  useBulkDeleteLeadsMutation,
 } from '../../services/api';
 
 interface TabPanelProps {
@@ -376,6 +377,7 @@ const LeadManagement: React.FC = () => {
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteLead]=useDeleteLeadMutation();
+  const [bulkDeleteLeads] = useBulkDeleteLeadsMutation();
 
   // API calls
   const { 
@@ -406,23 +408,37 @@ const LeadManagement: React.FC = () => {
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    console.log('Changing to page:', value);
     setFilters(prev => ({ ...prev, page: value }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Changing rows per page to:', event.target.value);
     setFilters(prev => ({ 
       ...prev, 
       limit: parseInt(event.target.value, 10),
       page: 1 // Reset to first page when changing rows per page
     }));
   };
+  
+
 
   const handleLeadSelect = (leadId: string) => {
     setSelectedLeads(prev => 
-      prev.includes(leadId) 
-        ? prev.filter(id => id !== leadId)
-        : [...prev, leadId]
+      prev.includes(leadId) ? prev.filter(id => id !== leadId) : [...prev, leadId]
     );
+  };
+
+  
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedLeads.length} leads?`)) {
+      try {
+        await bulkDeleteLeads({ leadIds: selectedLeads }).unwrap();
+        setSelectedLeads([]);
+      } catch (error) {
+        console.error('Error in bulk deletion:', error);
+      }
+    }
   };
 
   const handleBulkAssign = async (assignedTo: string) => {
@@ -590,6 +606,16 @@ const LeadManagement: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   {selectedLeads.length > 0 && (
                     <>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Delete />}
+                        onClick={handleBulkDelete}
+                        color="error"
+                        sx={{ mr: 1 }}
+                      >
+                        Delete ({selectedLeads.length})
+                      </Button>
                       <Button
                         variant="outlined"
                         size="small"
