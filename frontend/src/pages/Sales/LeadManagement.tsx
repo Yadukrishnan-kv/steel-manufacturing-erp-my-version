@@ -45,6 +45,8 @@ import {
   Refresh,
   AssignmentInd,
   Delete,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import {
   useGetLeadsQuery,
@@ -365,7 +367,7 @@ const LeadManagement: React.FC = () => {
   const [editedLead, setEditedLead] = useState<any>({});
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 20,
+    limit: 10,
     search: '',
     status: '',
     source: '',
@@ -405,6 +407,14 @@ const LeadManagement: React.FC = () => {
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setFilters(prev => ({ ...prev, page: value }));
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilters(prev => ({ 
+      ...prev, 
+      limit: parseInt(event.target.value, 10),
+      page: 1 // Reset to first page when changing rows per page
+    }));
   };
 
   const handleLeadSelect = (leadId: string) => {
@@ -749,15 +759,40 @@ const LeadManagement: React.FC = () => {
               </Table>
             </TableContainer>
 
-            {/* Pagination */}
+            {/* Custom Pagination */}
             {leadsData?.pagination && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Pagination
-                  count={leadsData.pagination.pages}
-                  page={filters.page}
-                  onChange={handlePageChange}
-                  color="primary"
-                />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, px: 1, gap: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="caption" color="text.secondary">rows per page:</Typography>
+                  <Select
+                    size="small"
+                    value={filters.limit}
+                    onChange={(e) => handleRowsPerPageChange({ target: { value: e.target.value } } as any)}
+                    sx={{ minWidth: 50, height: 32 }}
+                  >
+                    <MenuItem value={2}>2</MenuItem>
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                    <MenuItem value={25}>25</MenuItem>
+                    <MenuItem value={50}>50</MenuItem>
+                  </Select>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handlePageChange(null as any, filters.page - 1)}
+                    disabled={filters.page <= 1}
+                  >
+                    <ChevronLeft />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handlePageChange(null as any, filters.page + 1)}
+                    disabled={filters.page >= (leadsData.pagination.pages || 1)}
+                  >
+                    <ChevronRight />
+                  </IconButton>
+                </Box>
               </Box>
             )}
           </CardContent>
