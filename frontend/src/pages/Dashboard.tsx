@@ -282,7 +282,7 @@ const Dashboard: React.FC = () => {
   const theme = useTheme();
   const { user } = useSelector((state: RootState) => state.auth);
   
-  // Fetch all dashboard data
+  // Fetch only essential dashboard data
   const {
     data: dashboardData,
     isLoading: dashboardLoading,
@@ -293,23 +293,13 @@ const Dashboard: React.FC = () => {
   );
 
   const {
-    isLoading: financeLoading,
-  } = useGetFinanceDashboardQuery();
-
-  const {
-    isLoading: biLoading,
-  } = useGetBIDashboardQuery({ 
-    role: user?.role || 'executive', 
-    period: '6months', 
-    metric: 'revenue' 
-  });
-
-  const {
     data: alertsData,
     isLoading: alertsLoading,
-  } = useGetAlertsQuery();
+  } = useGetAlertsQuery(undefined, {
+    skip: !user?.id
+  });
 
-  const isLoading = dashboardLoading || financeLoading || biLoading || alertsLoading;
+  const isLoading = dashboardLoading || alertsLoading;
 
   if (isLoading) {
     return (

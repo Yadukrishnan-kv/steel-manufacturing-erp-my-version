@@ -424,34 +424,33 @@ const CreateBOM: React.FC = () => {
                             <TableRow key={field.id}>
                               <TableCell sx={{ p: 1 }}>
                                 <FormControl fullWidth size="small" error={!!errors.items?.[index]?.inventoryItemId}>
-                                  <Select
-                                    value={watch(`items.${index}.inventoryItemId`) || ''}
-                                    onChange={(e) => {
-                                      // Update inventory item and auto-fill unit
-                                      const selectedItem = inventoryItems.find((item: any) => item.id === e.target.value);
-                                      if (selectedItem) {
-                                        // This would need to be handled by the Controller
-                                      }
-                                    }}
-                                    displayEmpty
-                                    sx={{ fontSize: '0.75rem' }}
-                                  >
-                                    <MenuItem value="" disabled>
-                                      Select item
-                                    </MenuItem>
-                                    {inventoryItems.map((item: any) => (
-                                      <MenuItem key={item.id} value={item.id}>
-                                        <Box>
-                                          <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                                            {item.itemCode}
-                                          </Typography>
-                                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                                            {item.name}
-                                          </Typography>
-                                        </Box>
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
+                                  <Controller
+                                    name={`items.${index}.inventoryItemId`}
+                                    control={control}
+                                    render={({ field }) => (
+                                      <Select
+                                        {...field}
+                                        displayEmpty
+                                        sx={{ fontSize: '0.75rem' }}
+                                      >
+                                        <MenuItem value="" disabled>
+                                          Select item
+                                        </MenuItem>
+                                        {inventoryItems.map((item: any) => (
+                                          <MenuItem key={item.id} value={item.id}>
+                                            <Box>
+                                              <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                                {item.itemCode}
+                                              </Typography>
+                                              <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                                                {item.name}
+                                              </Typography>
+                                            </Box>
+                                          </MenuItem>
+                                        ))}
+                                      </Select>
+                                    )}
+                                  />
                                 </FormControl>
                               </TableCell>
                               <TableCell sx={{ p: 1 }}>

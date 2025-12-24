@@ -25,6 +25,19 @@ const createLeadSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
 });
 
+const updateLeadSchema = z.object({
+  source: z.enum(['META', 'GOOGLE', 'REFERRAL', 'DIRECT']).optional(),
+  sourceRef: z.string().optional(),
+  contactName: z.string().min(1).optional(),
+  phone: z.string().min(10).optional(),
+  email: z.string().email().optional(),
+  address: z.string().optional(),
+  requirements: z.string().optional(),
+  estimatedValue: z.number().positive().optional(),
+  assignedTo: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+});
+
 const siteMeasurementSchema = z.object({
   leadId: z.string().uuid(),
   location: z.object({
@@ -133,6 +146,93 @@ const customerSchema = z.object({
 });
 
 // Lead Management Routes
+
+/**
+ * PUT /api/sales/leads/bulk-assign
+ * Bulk assign leads to sales representative
+ */
+router.put('/leads/bulk-assign',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { leadIds, assignedTo } = req.body;
+
+      if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0 || !assignedTo) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'leadIds array and assignedTo are required',
+          },
+        });
+      }
+
+      const updatedCount = await salesService.bulkAssignLeads(
+        leadIds,
+        assignedTo,
+        req.user?.id || 'system'
+      );
+
+      res.json({
+        success: true,
+        data: {
+          updatedCount,
+          assignedTo,
+        },
+        message: `${updatedCount} leads assigned successfully`,
+      });
+    } catch (error) {
+      logger.error('Error in bulk lead assignment:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BULK_ASSIGNMENT_FAILED',
+          message: 'Failed to assign leads',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/sales/leads/bulkDelete
+ * Bulk delete leads
+ */
+router.delete('/leads/bulkDelete',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { leadIds } = req.body;
+
+      if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_INPUT',
+            message: 'leadIds array is required',
+          },
+        });
+      }
+
+      const deletedCount = await salesService.bulkDeleteLeads(leadIds);
+
+      res.json({
+        success: true,
+        data: { deletedCount },
+        message: `${deletedCount} leads deleted successfully`,
+      });
+    } catch (error) {
+      logger.error('Error bulk deleting leads:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'BULK_DELETE_FAILED',
+          message: 'Failed to delete leads',
+        },
+      });
+    }
+  }
+);
 
 /**
  * @swagger
@@ -254,6 +354,109 @@ router.get('/leads/:id',
         error: {
           code: 'LEAD_NOT_FOUND',
           message: 'Lead not found',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /sales/leads/{id}:
+ *   put:
+ *     summary: Update lead
+ *     description: Update lead information
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Lead ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateLead'
+ *     responses:
+ *       200:
+ *         description: Lead updated successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.put('/leads/:id',
+  authenticate,
+  validate({ body: updateLeadSchema }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Lead ID is required',
+          },
+        });
+        return;
+      }
+
+      const lead = await salesService.updateLead(id, req.body, req.user?.id || 'system');
+
+      res.json({
+        success: true,
+        data: lead,
+        message: 'Lead updated successfully',
+      });
+    } catch (error) {
+      logger.error('Error updating lead:', error);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'LEAD_UPDATE_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to update lead',
+        },
+      });
+    }
+  }
+);
+
+router.delete('/leads/:id',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETER',
+            message: 'Lead ID is required',
+          },
+        });
+        return;
+      }
+
+      await salesService.deleteLead(id);
+
+      res.json({
+        success: true,
+        message: 'Lead deleted successfully',
+      });
+    } catch (error) {
+      logger.error('Error deleting lead:', error);
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'LEAD_DELETE_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to delete lead',
         },
       });
     }
@@ -1940,54 +2143,6 @@ router.get('/follow-up-tasks',
         error: {
           code: 'FOLLOW_UP_TASKS_FAILED',
           message: 'Failed to fetch follow-up tasks',
-        },
-      });
-    }
-  }
-);
-
-/**
- * PUT /api/sales/leads/bulk-assign
- * Bulk assign leads to sales representative
- */
-router.put('/leads/bulk-assign',
-  authenticate,
-  async (req, res) => {
-    try {
-      const { leadIds, assignedTo } = req.body;
-
-      if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0 || !assignedTo) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: 'INVALID_PARAMETER',
-            message: 'leadIds array and assignedTo are required',
-          },
-        });
-        return;
-      }
-
-      const updatedCount = await salesService.bulkAssignLeads(
-        leadIds,
-        assignedTo,
-        req.user?.id || 'system'
-      );
-
-      res.json({
-        success: true,
-        data: {
-          updatedCount,
-          assignedTo,
-        },
-        message: `${updatedCount} leads assigned successfully`,
-      });
-    } catch (error) {
-      logger.error('Error in bulk lead assignment:', error);
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'BULK_ASSIGNMENT_FAILED',
-          message: 'Failed to assign leads',
         },
       });
     }

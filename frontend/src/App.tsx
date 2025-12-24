@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Box, CircularProgress } from '@mui/material';
 import type { RootState } from './store/store';
 import { useGetCurrentUserQuery } from './services/api';
-import { setUser } from './store/slices/authSlice';
+import { setUser, logout } from './store/slices/authSlice';
 
 // Components
 import LoginForm from './components/auth/LoginForm';
@@ -21,18 +21,27 @@ const App: React.FC = () => {
   const { isAuthenticated, token, user } = useSelector((state: RootState) => state.auth);
   
   // Fetch current user if we have a token but no user data
-  const { data: currentUser, isLoading } = useGetCurrentUserQuery(undefined, {
-    skip: !token || !!user,
+  const shouldFetchUser = isAuthenticated && token && !user;
+  const { data: currentUser, isLoading: userQueryLoading, error: userQueryError } = useGetCurrentUserQuery(undefined, {
+    skip: !shouldFetchUser,
   });
 
   useEffect(() => {
     if (currentUser && !user) {
       dispatch(setUser(currentUser));
     }
-  }, [currentUser?.id, user?.id, dispatch]);
+  }, [currentUser, user, dispatch]);
+
+  // Handle authentication errors
+  useEffect(() => {
+    if (userQueryError && 'status' in userQueryError && userQueryError.status === 401) {
+      // Token is invalid, clear auth state
+      dispatch(logout());
+    }
+  }, [userQueryError, dispatch]);
 
   // Show loading while checking authentication
-  if (isLoading && token && !user) {
+  if (userQueryLoading && token && !user) {
     return (
       <Box
         sx={{
