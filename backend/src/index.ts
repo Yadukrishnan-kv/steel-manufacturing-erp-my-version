@@ -39,8 +39,35 @@ app.use(helmet({
   },
 }));
 
+// app.use(cors({
+//   origin: config.cors.origin[0] === '*' ? true : config.cors.origin,
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'x-customer-id'],
+// }));
+
 app.use(cors({
-  origin: config.cors.origin[0] === '*' ? true : config.cors.origin,
+  origin: (requestOrigin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl)
+    if (!requestOrigin) return callback(null, true);
+
+    const allowedOrigins = config.cors.origin;  // Your array from config
+
+    if (allowedOrigins.includes('*')) {
+      // If * is in the list, allow all (but not with credentials=true — careful!)
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(requestOrigin)) {
+      return callback(null, requestOrigin);  // Reflect the exact origin
+    }
+
+    // Optional: Allow subdomains or regex if needed later
+    // const match = allowedOrigins.some(origin => origin instanceof RegExp && origin.test(requestOrigin));
+    // if (match) return callback(null, requestOrigin);
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'x-customer-id'],
