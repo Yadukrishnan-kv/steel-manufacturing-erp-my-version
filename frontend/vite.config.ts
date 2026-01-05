@@ -58,17 +58,16 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       onwarn(warning, defaultHandler) {
-        // Suppress specific deprecation warnings from @vitejs/plugin-react
-        // Common ones: "import.meta.env" deprecation, "use of deprecated API", etc.
-        if (
-          warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
-          warning.message.includes('import.meta') ||
-          warning.message.includes('deprecated') ||
-          warning.message.includes('use client') // sometimes triggered in certain setups
-        ) {
-          return; // Ignore this warning
+        // Suppress the common "Module level directives cause errors when bundled" warning
+        // This is triggered by "use client" in files (harmless for client-side React apps)
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return;
         }
-        // Let all other warnings pass through (so you still see real issues)
+        // Also suppress any import.meta-related deprecations if present
+        if (warning.message.includes('import.meta')) {
+          return;
+        }
+        // Let all other warnings/errors show (so real problems aren't hidden)
         if (defaultHandler) {
           defaultHandler(warning);
         }
