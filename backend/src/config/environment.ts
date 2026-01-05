@@ -30,7 +30,8 @@ const envSchema = z.object({
   UPLOAD_PATH: z.string().default('./uploads'),
   
   // CORS
-  CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  // CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  CORS_ORIGIN: z.string().default('https://steel-manufacturing-erp-my-version.vercel.app/'),
   
   // External APIs
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),

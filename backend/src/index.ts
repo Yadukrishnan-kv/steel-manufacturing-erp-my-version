@@ -48,25 +48,25 @@ app.use(helmet({
 
 app.use(cors({
   origin: (requestOrigin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, curl)
+    // Allow requests with no origin (e.g., server-to-server, Postman, curl)
     if (!requestOrigin) return callback(null, true);
 
-    const allowedOrigins = config.cors.origin;  // Your array from config
+    const allowedOrigins = Array.isArray(config.cors.origin) 
+      ? config.cors.origin 
+      : [config.cors.origin];  // Fallback to array if string
 
+    // Optional: Allow all if '*' is in the list (but NOT with credentials: true — remove if using credentials)
     if (allowedOrigins.includes('*')) {
-      // If * is in the list, allow all (but not with credentials=true — careful!)
-      return callback(null, true);
+      return callback(null, true);  // Reflects any origin
     }
 
     if (allowedOrigins.includes(requestOrigin)) {
-      return callback(null, requestOrigin);  // Reflect the exact origin
+      return callback(null, requestOrigin);  // Reflect exact matching origin
     }
 
-    // Optional: Allow subdomains or regex if needed later
-    // const match = allowedOrigins.some(origin => origin instanceof RegExp && origin.test(requestOrigin));
-    // if (match) return callback(null, requestOrigin);
-
-    return callback(new Error('Not allowed by CORS'));
+    // Reject with no error (prevents header, browser shows no Access-Control-Allow-Origin)
+    return callback(null, false);
+    // OR reject with error for logging: callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
